@@ -3,8 +3,21 @@
 
 import PySimpleGUI as sg
 import os.path
+import io
 from PIL import Image, ImageTk
 from utils import *
+
+def resize_image(image, scale_factor):
+    width, height = image.size
+    new_width = int(width* scale_factor)
+    new_height = int(height * scale_factor)
+    resized_image = image.resize((new_width, new_height), Image.LANCZOS)
+    return resized_image
+
+def convert_to_base64(image):
+    with io.BytesIO() as output:
+        image.save(output, format='PNG')
+    return base64.b64encode(output.getvalue()).decode('utf-8')
 
 # First the window layout in 2 columns
 
@@ -26,6 +39,7 @@ image_viewer_column = [
     [sg.Text("Choose an image from list on left:")],
     [sg.Text(size=(40, 1), key="-TOUT-")],
     [sg.Image(key="-IMAGE-")],
+    [sg.Button('Zoom In', key='ZOOM_IN'), sg.Button('Zoom Out', key='ZOOM_OUT')],
 ]
 
 # ----- Full layout -----
@@ -37,7 +51,7 @@ layout = [
     ]
 ]
 
-window = sg.Window("Image Viewer", layout)
+window = sg.Window("Image Viewer", layout, resizable=True)
 
 # Run the Event Loop
 while True:
@@ -79,12 +93,26 @@ while True:
                 print(coord)
             
             image = Image.open(filename_with_path)
+            current_scale = 1.0
             image.thumbnail((400, 400))  # Ajuste o tamanho conforme necessário
             photo_img = ImageTk.PhotoImage(image)
 
             window["-IMAGE-"].update(data=photo_img)
-
         except:
             pass
+    
+    elif event == "ZOOM_IN":
+        current_scale *= 1.1
+        resized_image = resize_image(image, current_scale)
+        photo_img = ImageTk.PhotoImage(resized_image)
+        window["-IMAGE-"].update(data=photo_img)
+
+    elif event == "ZOOM_OUT":
+        current_scale *= 0.9
+        resized_image = resize_image(image, current_scale)
+        photo_img = ImageTk.PhotoImage(resized_image)
+        window["-IMAGE-"].update(data=photo_img)
+
+
 
 window.close()
