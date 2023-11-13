@@ -7,7 +7,7 @@ import pandas as pd
 #################################################
 
 def getCoordinates(fileName):
-    df = pd.read_csv("data/classifications.csv")
+    df = pd.read_csv("./data/classifications.csv")
     filtered = df[df['image_filename'] == fileName]
     tuples = list(filtered[['nucleus_x', 'nucleus_y']].apply(tuple, axis=1))
     return tuples

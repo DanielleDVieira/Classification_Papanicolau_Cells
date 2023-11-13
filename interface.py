@@ -4,6 +4,7 @@
 import PySimpleGUI as sg
 import os.path
 from PIL import Image, ImageTk
+from utils import *
 
 # First the window layout in 2 columns
 
@@ -61,12 +62,23 @@ while True:
         window["-FILE LIST-"].update(fnames)
     elif event == "-FILE LIST-":  # A file was chosen from the listbox
         try:
-            filename = os.path.join(
+            filename_with_path = os.path.join(
                 values["-FOLDER-"], values["-FILE LIST-"][0]
             )
-            window["-TOUT-"].update(filename)
 
-            image = Image.open(filename)
+            # Obtém apenas o nome do arquivo a partir do caminho completo
+            filename = os.path.basename(filename_with_path)
+
+            window["-TOUT-"].update(filename_with_path)
+
+            # Chama a função getCoordinates com o nome do arquivo selecionado
+            coordinates = getCoordinates(filename)
+            
+            print("Coordinates for", filename, ":")
+            for coord in coordinates:
+                print(coord)
+            
+            image = Image.open(filename_with_path)
             image.thumbnail((400, 400))  # Ajuste o tamanho conforme necessário
             photo_img = ImageTk.PhotoImage(image)
 
