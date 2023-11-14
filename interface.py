@@ -19,8 +19,6 @@ def convert_to_base64(image):
         image.save(output, format='PNG')
     return base64.b64encode(output.getvalue()).decode('utf-8')
 
-
-
 def colorize_coordinates(image_path, coordinates, output_folder):
     # Abre a imagem
     image = Image.open(image_path)
@@ -54,6 +52,41 @@ def colorize_coordinates(image_path, coordinates, output_folder):
     image.save(output_path)
 
     return output_path
+
+def recortar_e_salvar_imagem(nome_imagem, x, y, dimensao_recorte, pasta_destino):
+    # Abre a imagem em modo RGB
+    im = Image.open(nome_imagem)
+
+    # Obtém apenas o nome do arquivo a partir do caminho completo
+    filename = os.path.basename(nome_imagem)
+
+    # Obtém as dimensões da imagem original
+    width, height = im.size
+
+    # Calcula as coordenadas para o recorte com base na coordenada central e na dimensão desejada
+    left = x - dimensao_recorte // 2
+    top = y - dimensao_recorte // 2
+    right = left + dimensao_recorte
+    bottom = top + dimensao_recorte
+
+    # Garante que as coordenadas não ultrapassem os limites da imagem
+    left = max(0, left)
+    top = max(0, top)
+    right = min(width, right)
+    bottom = min(height, bottom)
+
+    # Cria o recorte da imagem
+    im_recortada = im.crop((left, top, right, bottom))
+
+    # Cria o caminho para a pasta de destino
+    if not os.path.exists(pasta_destino):
+        os.makedirs(pasta_destino)
+
+    # Gera o nome do arquivo para salvar
+    nome_arquivo = os.path.join(pasta_destino, f"{filename}_recorte_{x}_{y}.png")
+
+    # Salva a imagem recortada na pasta de destino
+    im_recortada.save(nome_arquivo)
 
 
 # First the window layout in 2 columns
@@ -129,10 +162,17 @@ while True:
             for coord in coordinates:
                 print(coord)
 
+            # Converta as coordenadas para o sistema de coordenadas do Pillow
+            largura_imagem, altura_imagem = Image.open(filename_with_path).size
+            print("Largura da imagem: ", largura_imagem)
+            print("Altura da imagem: ", altura_imagem)
+
             # Adiciona a chamada da função colorize_coordinates após obter as coordenadas
             colorized_image_path = colorize_coordinates(filename_with_path, coordinates, "./colorCoordinates")
 
             print("Imagem colorizada salva em:", colorized_image_path)
+
+            [recortar_e_salvar_imagem(filename_with_path, x, y, 100, "./recorteImg") for x, y in coordinates]
             
             image = Image.open(filename_with_path)
             current_scale = 1.0
@@ -154,7 +194,5 @@ while True:
         resized_image = resize_image(image, current_scale)
         photo_img = ImageTk.PhotoImage(resized_image)
         window["-IMAGE-"].update(data=photo_img)
-
-
 
 window.close()
