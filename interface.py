@@ -4,7 +4,7 @@
 import PySimpleGUI as sg
 import os.path
 import io
-from PIL import Image, ImageTk
+from PIL import Image, ImageTk, ImageDraw
 from utils import *
 
 def resize_image(image, scale_factor):
@@ -18,6 +18,43 @@ def convert_to_base64(image):
     with io.BytesIO() as output:
         image.save(output, format='PNG')
     return base64.b64encode(output.getvalue()).decode('utf-8')
+
+
+
+def colorize_coordinates(image_path, coordinates, output_folder):
+    # Abre a imagem
+    image = Image.open(image_path)
+
+    # Cria um objeto ImageDraw para desenhar na imagem
+    draw = ImageDraw.Draw(image)
+
+    # Define a cor ciano (RGB: 0, 255, 255)
+    ciano = (0, 255, 255)
+
+    # Itera sobre as coordenadas e altera os pixels para a cor ciano
+    for x, y in coordinates:
+        for i in range(-2, 3):
+            for j in range(-2, 3):
+                new_x = x + i
+                new_y = y + j
+                
+                # Verifica se as novas coordenadas estão dentro dos limites da imagem
+                if 0 <= new_x < image.width and 0 <= new_y < image.height:
+                    draw.point((new_x, new_y), fill=ciano)
+        
+
+    # Obtém o nome do arquivo sem a extensão e adiciona "_colorized" ao nome
+    filename_without_extension = os.path.splitext(os.path.basename(image_path))[0]
+    output_filename = f"{filename_without_extension}_colorized.png"
+
+    # Cria o caminho completo para o arquivo de saída
+    output_path = os.path.join(output_folder, output_filename)
+
+    # Salva a imagem colorizada na pasta de saída
+    image.save(output_path)
+
+    return output_path
+
 
 # First the window layout in 2 columns
 
@@ -91,6 +128,11 @@ while True:
             print("Coordinates for", filename, ":")
             for coord in coordinates:
                 print(coord)
+
+            # Adiciona a chamada da função colorize_coordinates após obter as coordenadas
+            colorized_image_path = colorize_coordinates(filename_with_path, coordinates, "./colorCoordinates")
+
+            print("Imagem colorizada salva em:", colorized_image_path)
             
             image = Image.open(filename_with_path)
             current_scale = 1.0
