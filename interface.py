@@ -203,3 +203,4 @@ while True:
         window["-IMAGE-"].update(data=photo_img)
 
 window.close()
+os.system('rm -r recorteImg && rm -r colorCoordinates')
