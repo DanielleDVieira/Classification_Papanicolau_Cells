@@ -53,7 +53,7 @@ def colorize_coordinates(image_path, coordinates, output_folder):
 
     return output_path
 
-def recortar_e_salvar_imagem(nome_imagem, x, y, dimensao_recorte, pasta_destino):
+def recortar_e_salvar_imagem(nome_imagem, x, y, cells_id, dimensao_recorte, pasta_destino):
     # Abre a imagem em modo RGB
     im = Image.open(nome_imagem)
 
@@ -82,8 +82,8 @@ def recortar_e_salvar_imagem(nome_imagem, x, y, dimensao_recorte, pasta_destino)
     if not os.path.exists(pasta_destino):
         os.makedirs(pasta_destino)
 
-    # Gera o nome do arquivo para salvar
-    nome_arquivo = os.path.join(pasta_destino, f"{filename}_recorte_{x}_{y}.png")
+    # Gera o nome do arquivo para alvar
+    nome_arquivo = os.path.join(pasta_destino, f"{cells_id}.png")
 
     # Salva a imagem recortada na pasta de destino
     im_recortada.save(nome_arquivo)
@@ -155,12 +155,19 @@ while True:
 
             window["-TOUT-"].update(filename_with_path)
 
-            # Chama a função getCoordinates com o nome do arquivo selecionado
-            coordinates = getCoordinates(filename)
+            # Chama a função getCellData com o nome do arquivo selecionado
+            cell_information = getCellData(filename)
+
+            coordinates = [(x, y) for x, y, cell_id in cell_information] 
+            c_ids = [cell_id for x, y, cell_id in cell_information]
             
             print("Coordinates for", filename, ":")
             for coord in coordinates:
                 print(coord)
+
+            print("Cells id for", filename, ":")
+            for ids in c_ids:
+                print(ids)
 
             # Converta as coordenadas para o sistema de coordenadas do Pillow
             largura_imagem, altura_imagem = Image.open(filename_with_path).size
@@ -172,7 +179,7 @@ while True:
 
             print("Imagem colorizada salva em:", colorized_image_path)
 
-            [recortar_e_salvar_imagem(filename_with_path, x, y, 100, "./recorteImg") for x, y in coordinates]
+            [recortar_e_salvar_imagem(filename_with_path, x, y, cell_id, 100, "./recorteImg") for x, y, cell_id in cell_information]
             
             image = Image.open(filename_with_path)
             current_scale = 1.0
