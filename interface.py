@@ -7,6 +7,9 @@ import io
 from PIL import Image, ImageTk, ImageDraw
 from utils import *
 
+# Default cut size is 100
+cut_size = 100
+
 def resize_image(image, scale_factor):
     width, height = image.size
     new_width = int(width* scale_factor)
@@ -110,6 +113,33 @@ image_viewer_column = [
     [sg.Text(size=(40, 1), key="-TOUT-")],
     [sg.Image(key="-IMAGE-")],
     [sg.Button('Zoom In', key='ZOOM_IN'), sg.Button('Zoom Out', key='ZOOM_OUT')],
+    [sg.Button('Compute', key='COMPUTE')],
+]
+
+params_image_cut = [
+    [sg.Text(text="Size (px) of image cut")],
+    [sg.Input(key="-CUTSIZE-")],
+]
+
+
+params_idisf= [
+   [sg.Text(key="-0IDISF-", text="Number of Seeds", visible=True)],
+   [sg.Input(key="-1IDISF-", visible=True)],
+]
+
+params_disf = [
+    [sg.Text(key="-0DISF-", text="VASCO", visible=False)],
+    [sg.Input(key="-1DISF-", visible=False)],
+]
+
+param_values = [
+    [sg.Text(text="Current values:")],
+    [sg.Text(text=f"Cut Size Value: {cut_size}", key="-CUTSIZEVALUE-")],
+]
+
+names=["IDISF", "DISF"]
+lst = [
+        [sg.Combo(names,  expand_x=True, expand_y=False, enable_events=True, default_value=names[0], readonly=True, key='-COMBO-', size=(20, 20))],
 ]
 
 # ----- Full layout -----
@@ -118,14 +148,21 @@ layout = [
         sg.Column(file_list_column),
         sg.VSeperator(),
         sg.Column(image_viewer_column),
+        sg.VSeparator(),
+        [(params_image_cut), (lst)],
+        sg.Column(params_idisf, vertical_alignment='top'),
+        sg.Column(params_disf, vertical_alignment='top'),
     ]
 ]
 
+
+os.system("mkdir recorteImg && mkdir colorCoordinates")
 window = sg.Window("Image Viewer", layout, resizable=True)
 
 # Run the Event Loop
 while True:
     event, values = window.read()
+    print(event, values) 
     if event == "Exit" or event == sg.WIN_CLOSED:
         break
     # Folder name was filled in, make a list of files in the folder
@@ -144,6 +181,7 @@ while True:
             and f.lower().endswith((".png", ".jpg"))
         ]
         window["-FILE LIST-"].update(fnames)
+
     elif event == "-FILE LIST-":  # A file was chosen from the listbox
         try:
             filename_with_path = os.path.join(
@@ -155,32 +193,6 @@ while True:
 
             window["-TOUT-"].update(filename_with_path)
 
-            # Chama a função getCellData com o nome do arquivo selecionado
-            cell_information = getCellData(filename)
-
-            coordinates = [(x, y) for x, y, cell_id in cell_information] 
-            c_ids = [cell_id for x, y, cell_id in cell_information]
-            
-            print("Coordinates for", filename, ":")
-            for coord in coordinates:
-                print(coord)
-
-            print("Cells id for", filename, ":")
-            for ids in c_ids:
-                print(ids)
-
-            # Converta as coordenadas para o sistema de coordenadas do Pillow
-            largura_imagem, altura_imagem = Image.open(filename_with_path).size
-            print("Largura da imagem: ", largura_imagem)
-            print("Altura da imagem: ", altura_imagem)
-
-            # Adiciona a chamada da função colorize_coordinates após obter as coordenadas
-            colorized_image_path = colorize_coordinates(filename_with_path, coordinates, "./colorCoordinates")
-
-            print("Imagem colorizada salva em:", colorized_image_path)
-
-            [recortar_e_salvar_imagem(filename_with_path, x, y, cell_id, 100, "./recorteImg") for x, y, cell_id in cell_information]
-            
             image = Image.open(filename_with_path)
             current_scale = 1.0
             image.thumbnail((400, 400))  # Ajuste o tamanho conforme necessário
@@ -189,7 +201,59 @@ while True:
             window["-IMAGE-"].update(data=photo_img)
         except:
             pass
-    
+    elif event == "-COMBO-":
+        alg = values['-COMBO-']
+        if alg == "IDISF":
+            for i in range(len(params_disf)):
+                aux = f"-{i}DISF-"
+                window[aux].update(visible=False)
+
+            for i in range(len(params_idisf)):
+                aux = f"-{i}IDISF-"
+                window[aux].update(visible=True)
+            print("OPA")
+        else: 
+            for i in range(len(params_idisf)):
+                aux = f"-{i}IDISF-"
+                window[aux].update(visible=False)
+
+            for i in range(len(params_disf)):
+                aux = f"-{i}DISF-"
+                window[aux].update(visible=True)
+
+    elif event == "COMPUTE":
+        # Chama a função getCellData com o nome do arquivo selecionado
+        cell_information = getCellData(filename)
+        
+        cut_size = int(values["-CUTSIZE-"])
+        window["-CUTSIZEVALUE-"].update(f"Cut Image Size: {cut_size}")
+
+        coordinates = [(x, y) for x, y, cell_id in cell_information] 
+        c_ids = [cell_id for x, y, cell_id in cell_information]
+        
+        print("Coordinates for", filename, ":")
+        for coord in coordinates:
+            print(coord)
+
+        print("Cells id for", filename, ":")
+        for ids in c_ids:
+            print(ids)
+
+        # Converta as coordenadas para o sistema de coordenadas do Pillow
+        largura_imagem, altura_imagem = Image.open(filename_with_path).size
+        print("Largura da imagem: ", largura_imagem)
+        print("Altura da imagem: ", altura_imagem)
+
+        # Adiciona a chamada da função colorize_coordinates após obter as coordenadas
+        colorized_image_path = colorize_coordinates(filename_with_path, coordinates, "./colorCoordinates")
+
+        print("Imagem colorizada salva em:", colorized_image_path)
+
+        [recortar_e_salvar_imagem(filename_with_path, x, y, cell_id, cut_size, "./recorteImg") for x, y, cell_id in cell_information]
+        
+
+
+
     elif event == "ZOOM_IN":
         current_scale *= 1.1
         resized_image = resize_image(image, current_scale)
