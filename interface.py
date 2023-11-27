@@ -8,6 +8,7 @@ from PIL import Image, ImageTk, ImageDraw
 from utils import *
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
+import sys
 
 # Default cut size is 100
 cut_size = 100
@@ -154,7 +155,7 @@ names=["IDISF", "DISF"]
 lst = [
         [sg.Combo(names,  expand_x=True, expand_y=False, enable_events=True, default_value=names[0], readonly=True, key='-COMBO-', size=(20, 20))],
 ]
-removeOption=["Removal by relevance", "Removal by class"]
+removeOption=["1:Removal by relevance", "2:Removal by class"]
 pathCostOptions=["1:color distance", "2:gradient-cost", "3:beta norm", "4:cv tree norm", "5:sum gradient-cost", "6: sum beta norm"]
 
 # ----- Full layout -----
@@ -208,7 +209,7 @@ window = sg.Window("Image Viewer", layout, resizable=True)
 # Run the Event Loop
 while True:
     event, values = window.read()
-    print(event, values) 
+    # print(event, values) 
     if event == "Exit" or event == sg.WIN_CLOSED:
         break
     # Folder name was filled in, make a list of files in the folder
@@ -267,11 +268,9 @@ while True:
             for i in range(len(params_idisf)):
                 print(type(i))
                 if (i != 2) & (i != 3):
-                    print(f'{i} nao eh 2 ou 3')
                     aux = f"-{i}IDISF-"
                     window[aux].update(visible=False)
                 else:
-                    print(f'{i} eh 2 ou 3')
                     aux = f"-{i}IDISF-"
                     window[aux].update(visible=True)
 
@@ -313,9 +312,29 @@ while True:
     elif event == "COMPUTE":
         # Chama a função getCellData com o nome do arquivo selecionado
         cell_information = getCellData(filename)
-        
+
+        remove_option = int(values["-COMBOREMOVAL-"].split(':')[0])
+        functionsPathCost = int(values["-COMBOPATHCOST-"].split(':')[0])
+
+        if remove_option == 1: 
+            super_pixel = int(values['-3IDISF-'])
+            window["-3IDISF-"].update(f"{super_pixel}")
+        else: 
+            n_iterations = int(values['-5IDISF-'])
+            window["-5IDISF-"].update(f"{n_iterations}")
+
+        if (functionsPathCost != 1) | (functionsPathCost != 6):
+            c1 = float(values['-7IDISF-'])
+            window["-7IDISF-"].update(f"{c1}")
+
+            c2 = float(values['-9IDISF-'])
+            window["-9IDISF-"].update(f"{c2}")
+
         cut_size = int(values["-CUTSIZE-"])
-        window["-CUTSIZE-"].update(f"Cut Image Size: {cut_size}")
+        window["-CUTSIZE-"].update(f"{cut_size}")
+
+        seeds = int(values['-1IDISF-'])
+        window["-1IDISF-"].update(f"{seeds}")
 
         coordinates = [(x, y) for x, y, cell_id in cell_information] 
         c_ids = [cell_id for x, y, cell_id in cell_information]
@@ -343,6 +362,8 @@ while True:
         print("New coordinates:")
         for coord in resulting_coordinates:
             print(coord)
+
+        os.system(f'./bin/iDISF_demo --i {filename_with_path} --n0 {seeds} --nf 2 --f 1 --o ./out.pgm --xseeds 50 --yseeds 50 --obj_markers 1 --rem 2') 
 
     elif event == "ZOOM_IN":
         plt.imshow(image)
