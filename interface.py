@@ -6,21 +6,11 @@ import os.path
 import io
 from PIL import Image, ImageTk, ImageDraw
 from utils import *
+import matplotlib.pyplot as plt
+import matplotlib.image as mpimg
 
 # Default cut size is 100
 cut_size = 100
-
-def resize_image(image, scale_factor):
-    width, height = image.size
-    new_width = int(width* scale_factor)
-    new_height = int(height * scale_factor)
-    resized_image = image.resize((new_width, new_height), Image.LANCZOS)
-    return resized_image
-
-def convert_to_base64(image):
-    with io.BytesIO() as output:
-        image.save(output, format='PNG')
-    return base64.b64encode(output.getvalue()).decode('utf-8')
 
 def colorize_coordinates(image_path, coordinates, output_folder):
     # Abre a imagem
@@ -117,8 +107,8 @@ image_viewer_column = [
     [sg.Text("Choose an image from list on left:")],
     [sg.Text(size=(40, 1), key="-TOUT-")],
     [sg.Image(key="-IMAGE-")],
-    [sg.Button('Zoom In', key='ZOOM_IN'), sg.Button('Zoom Out', key='ZOOM_OUT')],
-    [sg.Button('Compute', key='COMPUTE')],
+    # [sg.Button('Zoom In', key='ZOOM_IN'), sg.Button('Zoom Out', key='ZOOM_OUT')],
+    [sg.Button('Compute', key='COMPUTE'), sg.Button('Zoom In', key='ZOOM_IN')],
 ]
 
 params_image_cut = [
@@ -250,7 +240,6 @@ while True:
             window["-TOUT-"].update(filename_with_path)
 
             image = Image.open(filename_with_path)
-            current_scale = 1.0
             image.thumbnail((400, 400))  # Ajuste o tamanho conforme necessário
             photo_img = ImageTk.PhotoImage(image)
 
@@ -356,16 +345,8 @@ while True:
             print(coord)
 
     elif event == "ZOOM_IN":
-        current_scale *= 1.1
-        resized_image = resize_image(image, current_scale)
-        photo_img = ImageTk.PhotoImage(resized_image)
-        window["-IMAGE-"].update(data=photo_img)
-
-    elif event == "ZOOM_OUT":
-        current_scale *= 0.9
-        resized_image = resize_image(image, current_scale)
-        photo_img = ImageTk.PhotoImage(resized_image)
-        window["-IMAGE-"].update(data=photo_img)
+        plt.imshow(image)
+        plt.show()
 
 window.close()
 os.system('rm -r recorteImg && rm -r colorCoordinates')
