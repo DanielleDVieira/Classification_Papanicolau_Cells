@@ -256,9 +256,9 @@ while True:
 
         # [recortar_e_salvar_imagem(filename_with_path, x, y, cell_id, cut_size, "./recorteImg") for x, y, cell_id in cell_information]
         resulting_coordinates = [recortar_e_salvar_imagem(filename_with_path, x, y, 100, "./recorteImg") for x, y in coordinates]
-            print("New coordinates:")
-            for coord in resulting_coordinates:
-                print(coord)
+        print("New coordinates:")
+        for coord in resulting_coordinates:
+            print(coord)
         
 
 
