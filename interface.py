@@ -127,14 +127,32 @@ params_image_cut = [
 ]
 
 
-params_idisf= [
-   [sg.Text(key="-0IDISF-", text="Number of Seeds", visible=True)],
-   [sg.Input(key="-1IDISF-", visible=True)],
+#params_idisf= [
+#   [sg.Text(key="-0IDISF-", text="Number of Seeds", visible=True)],
+#   [sg.Input(key="-1IDISF-", visible=True)],
+#]
+
+#params_disf = [
+#    [sg.Text(key="-0DISF-", text="VASCO", visible=False)],
+#    [sg.Input(key="-1DISF-", visible=False)],
+#]
+
+params_idisf = [
+    [sg.Text(key="-0IDISF-", text="Number of init GRID seeds (>= 0)")],
+    [sg.Input(key="-1IDISF-")],
+    [sg.Text(key="-2IDISF-", text="Number of final superpixels")],
+    [sg.Input(key="-3IDISF-")],
+    [sg.Text(key="-4IDISF-", text="Number of iterations")],
+    [sg.Input(key="-5IDISF-")],
+    [sg.Text(key="-6IDISF-", text="c1 - Interval: [0.1,1.0]")],
+    [sg.Input(key="-7IDISF-")],
+    [sg.Text(key="-8IDISF-", text="c2 - Interval: [0.1,1.0]")],
+    [sg.Input(key="-9IDISF-")],
 ]
 
 params_disf = [
-    [sg.Text(key="-0DISF-", text="VASCO", visible=False)],
-    [sg.Input(key="-1DISF-", visible=False)],
+    [sg.Text(key="-0DISF-", text="VASCO")],
+    [sg.Input(key="-1DISF-")],
 ]
 
 param_values = [
@@ -146,20 +164,53 @@ names=["IDISF", "DISF"]
 lst = [
         [sg.Combo(names,  expand_x=True, expand_y=False, enable_events=True, default_value=names[0], readonly=True, key='-COMBO-', size=(20, 20))],
 ]
+removeOption=["Removal by relevance", "Removal by class"]
+pathCostOptions=["1:color distance", "2:gradient-cost", "3:beta norm", "4:cv tree norm", "5:sum gradient-cost", "6: sum beta norm"]
 
 # ----- Full layout -----
+#layout = [
+#    [
+#        sg.Column(file_list_column),
+#        sg.VSeperator(),
+#        sg.Column(image_viewer_column),
+#        sg.VSeparator(),
+#        [(params_image_cut), (lst)],
+#        sg.Column(params_idisf, vertical_alignment='top'),
+#        sg.Column(params_disf, vertical_alignment='top'),
+#    ]
+#]
+
+# Layout atualizado com a única coluna para exibir os parâmetros correspondentes à escolha no dropdown
 layout = [
     [
         sg.Column(file_list_column),
+        sg.VSeparator(),
+        sg.Column([
+            [sg.Text(text="Size (px) of image cut:")],
+            [sg.Input(key="-CUTSIZE-")],
+            [sg.Text(text="Method for segmentation:")],
+            [sg.Combo(names, expand_x=True, expand_y=False, enable_events=True, default_value=names[0], readonly=True, key='-COMBO-', size=(20, 20))],
+            [sg.Text(key="-0IDISF-", text="Number of init GRID seeds (>= 0)")],
+            [sg.Input(key="-1IDISF-")],
+            [sg.Text(text="Seed removal options:")],
+            [sg.Combo(removeOption, expand_x=True, expand_y=False, enable_events=True, default_value=removeOption[0], readonly=True, key='-COMBOREMOVAL-', size=(20, 20))],
+            [sg.Text(key="-2IDISF-", text="Number of final superpixels:")],
+            [sg.Input(key="-3IDISF-")],
+            [sg.Text(key="-4IDISF-", text="Number of iterations:", visible=False)],
+            [sg.Input(key="-5IDISF-", visible=False)],
+            [sg.Text(text="Path-cost function:")],
+            [sg.Combo(pathCostOptions, expand_x=True, expand_y=False, enable_events=True, default_value=pathCostOptions[0], readonly=True, key='-COMBOPATHCOST-', size=(20, 20))],
+            [sg.Text(key="-6IDISF-", text="c1 - Interval: [0.1,1.0]", visible=False)],
+            [sg.Input(key="-7IDISF-", visible=False)],
+            [sg.Text(key="-8IDISF-", text="c2 - Interval: [0.1,1.0]", visible=False)],
+            [sg.Input(key="-9IDISF-", visible=False)],
+            [sg.Text(key="-0DISF-", text="VASCO", visible=False)],
+            [sg.Input(key="-1DISF-", visible=False)],
+        ]),
         sg.VSeperator(),
         sg.Column(image_viewer_column),
-        sg.VSeparator(),
-        [(params_image_cut), (lst)],
-        sg.Column(params_idisf, vertical_alignment='top'),
-        sg.Column(params_disf, vertical_alignment='top'),
     ]
 ]
-
 
 os.system("mkdir recorteImg && mkdir colorCoordinates")
 window = sg.Window("Image Viewer", layout, resizable=True)
@@ -209,6 +260,8 @@ while True:
     elif event == "-COMBO-":
         alg = values['-COMBO-']
         if alg == "IDISF":
+            window["-COMBOREMOVAL-"].update(visible=True)
+            window["-COMBOPATHCOST-"].update(visible=True)
             for i in range(len(params_disf)):
                 aux = f"-{i}DISF-"
                 window[aux].update(visible=False)
@@ -217,21 +270,63 @@ while True:
                 aux = f"-{i}IDISF-"
                 window[aux].update(visible=True)
             print("OPA")
-        else: 
-            for i in range(len(params_idisf)):
-                aux = f"-{i}IDISF-"
-                window[aux].update(visible=False)
 
-            for i in range(len(params_disf)):
-                aux = f"-{i}DISF-"
-                window[aux].update(visible=True)
+        else: 
+            window["-COMBOREMOVAL-"].update(visible=False)
+            window["-COMBOPATHCOST-"].update(visible=False)
+
+            for i in range(len(params_idisf)):
+                print(type(i))
+                if (i != 2) & (i != 3):
+                    print(f'{i} nao eh 2 ou 3')
+                    aux = f"-{i}IDISF-"
+                    window[aux].update(visible=False)
+                else:
+                    print(f'{i} eh 2 ou 3')
+                    aux = f"-{i}IDISF-"
+                    window[aux].update(visible=True)
+
+            #for i in range(len(params_disf)):
+            #    aux = f"-{i}DISF-"
+            #    window[aux].update(visible=True)
+
+    elif event == "-COMBOREMOVAL-":
+        remove_option = values["-COMBOREMOVAL-"]
+
+        if remove_option == "Removal by relevance":
+            # Nao aparecer o campo de numero de iteracoes se a remocao for por relevancia
+            window["-4IDISF-"].update(visible=False)
+            window["-5IDISF-"].update(visible=False)
+            window["-2IDISF-"].update(visible=True)
+            window["-3IDISF-"].update(visible=True)
+        else:
+            # Nao aparecer o campo de numero de superpixels finais se a remocao for por classe
+            window["-2IDISF-"].update(visible=False)
+            window["-3IDISF-"].update(visible=False)
+            window["-4IDISF-"].update(visible=True)
+            window["-5IDISF-"].update(visible=True)
+
+    elif event == "-COMBOPATHCOST-":
+        functionsPathCost = values["-COMBOPATHCOST-"]
+
+        if (functionsPathCost == "1:color distance") | (functionsPathCost == "6: sum beta norm"):
+            # Nao mostrar parametros das funcoes do path-cost se as funcoes forem 1 ou 6
+            window["-6IDISF-"].update(visible=False)
+            window["-7IDISF-"].update(visible=False)
+            window["-8IDISF-"].update(visible=False)
+            window["-9IDISF-"].update(visible=False)
+        else:
+            window["-6IDISF-"].update(visible=True)
+            window["-7IDISF-"].update(visible=True)
+            window["-8IDISF-"].update(visible=True)
+            window["-9IDISF-"].update(visible=True)
 
     elif event == "COMPUTE":
         # Chama a função getCellData com o nome do arquivo selecionado
         cell_information = getCellData(filename)
         
         cut_size = int(values["-CUTSIZE-"])
-        window["-CUTSIZEVALUE-"].update(f"Cut Image Size: {cut_size}")
+        window["-CUTSIZE-"].update(f"Cut Image Size: {cut_size}")
 
         coordinates = [(x, y) for x, y, cell_id in cell_information] 
         c_ids = [cell_id for x, y, cell_id in cell_information]
@@ -255,13 +350,10 @@ while True:
         print("Imagem colorizada salva em:", colorized_image_path)
 
         # [recortar_e_salvar_imagem(filename_with_path, x, y, cell_id, cut_size, "./recorteImg") for x, y, cell_id in cell_information]
-        resulting_coordinates = [recortar_e_salvar_imagem(filename_with_path, x, y, 100, "./recorteImg") for x, y in coordinates]
-            print("New coordinates:")
-            for coord in resulting_coordinates:
-                print(coord)
-        
-
-
+        resulting_coordinates = [recortar_e_salvar_imagem(filename_with_path, x, y, cell_id, cut_size, "./recorteImg") for x, y, cell_id in cell_information]
+        print("New coordinates:")
+        for coord in resulting_coordinates:
+            print(coord)
 
     elif event == "ZOOM_IN":
         current_scale *= 1.1
