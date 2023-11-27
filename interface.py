@@ -91,6 +91,11 @@ def recortar_e_salvar_imagem(nome_imagem, x, y, cells_id, dimensao_recorte, past
     # Salva a imagem recortada na pasta de destino
     im_recortada.save(nome_arquivo)
 
+    # Calcula a nova coordenada na imagem recortada correspondente à coordenada original
+    nova_coordenada_x = x - left
+    nova_coordenada_y = y - top
+
+    return nova_coordenada_x, nova_coordenada_y
 
 # First the window layout in 2 columns
 
@@ -249,7 +254,11 @@ while True:
 
         print("Imagem colorizada salva em:", colorized_image_path)
 
-        [recortar_e_salvar_imagem(filename_with_path, x, y, cell_id, cut_size, "./recorteImg") for x, y, cell_id in cell_information]
+        # [recortar_e_salvar_imagem(filename_with_path, x, y, cell_id, cut_size, "./recorteImg") for x, y, cell_id in cell_information]
+        resulting_coordinates = [recortar_e_salvar_imagem(filename_with_path, x, y, 100, "./recorteImg") for x, y in coordinates]
+            print("New coordinates:")
+            for coord in resulting_coordinates:
+                print(coord)
         
 
 
