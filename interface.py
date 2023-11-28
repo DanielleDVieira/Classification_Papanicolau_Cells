@@ -242,6 +242,9 @@ while True:
             # Obtém apenas o nome do arquivo a partir do caminho completo
             filename = os.path.basename(filename_with_path)
 
+            print(f"filename with path {filename_with_path}")
+            print(f"Just filename: {filename}")
+
             window["-TOUT-"].update(filename_with_path)
 
             image = Image.open(filename_with_path)
@@ -273,7 +276,7 @@ while True:
             window["-COMBOPATHCOST-"].update(visible=False)
 
             for i in range(len(params_idisf)):
-                if (i != 2) & (i != 3):
+                if (i != 0) & (i != 1) & (i != 2) & (i != 3):
                     aux = f"-{i}IDISF-"
                     window[aux].update(visible=False)
                 else:
@@ -318,43 +321,53 @@ while True:
     elif event == "COMPUTE":
         # Chama a função getCellData com o nome do arquivo selecionado
         cell_information = getCellData(filename)
+        filename_without_png = filename.split(".")[0]
 
         alg = values['-COMBO-']
 
         if alg == "IDISF":
 
+            seeds = int(values['-1IDISF-'])
+            window["-1IDISF-"].update(f"{seeds}")
+
+            idisfCall = f"./bin/iDISF_demo --i ../recorteImg/{filename_without_png}/*.png --n0 {seeds} --obj_markers 1 --o ../recorteImg/{filename_without_png}/segmented/*.png --xseeds xCoord --yseeds yCoord "
+
             try:
                 remove_option = int(values["-COMBOREMOVAL-"].split(':')[0])
+                idisfCall += f"--rem {remove_option} "
             except: continue
             try:
                 functionsPathCost = int(values["-COMBOPATHCOST-"].split(':')[0])
+                idisfCall += f"--f {functionsPathCost} "
             except: continue
 
             if remove_option == 1: 
                 super_pixel = int(values['-3IDISF-'])
                 window["-3IDISF-"].update(f"{super_pixel}")
+                idisfCall += f"--nf {super_pixel} "
             else: 
                 n_iterations = int(values['-5IDISF-'])
                 window["-5IDISF-"].update(f"{n_iterations}")
+                idisfCall += f"--it {n_iterations} "
 
             if (functionsPathCost != 1) | (functionsPathCost != 6):
                 c1 = float(values['-7IDISF-'])
                 window["-7IDISF-"].update(f"{c1}")
+                idisfCall += f"--c1 {c1} "
 
                 c2 = float(values['-9IDISF-'])
                 window["-9IDISF-"].update(f"{c2}")
+                idisfCall += f"--c2 {c2} "
 
                 print(f'C1: {c1} \t C2: {c2}')
 
             cut_size = int(values["-CUTSIZE-"])
             window["-CUTSIZE-"].update(f"{cut_size}")
 
-            seeds = int(values['-1IDISF-'])
-            window["-1IDISF-"].update(f"{seeds}")
-        
         else:
             super_pixel = int(values['-3IDISF-'])
             window["-3IDISF-"].update(f"{super_pixel}")
+            idisfCall += f"--nf {super_pixel} "
 
         coordinates = [(x, y) for x, y, cell_id in cell_information] 
         c_ids = [cell_id for x, y, cell_id in cell_information]
@@ -378,7 +391,7 @@ while True:
         print("Imagem colorizada salva em:", colorized_image_path)
 
         # [recortar_e_salvar_imagem(filename_with_path, x, y, cell_id, cut_size, "./recorteImg") for x, y, cell_id in cell_information]
-        resulting_coordinates = [recortar_e_salvar_imagem(filename_with_path, x, y, cell_id, cut_size, "./recorteImg") for x, y, cell_id in cell_information]
+        resulting_coordinates = [recortar_e_salvar_imagem(filename_with_path, x, y, cell_id, cut_size, f"./recorteImg/{filename_without_png}") for x, y, cell_id in cell_information]
         print("New coordinates:")
         for coord in resulting_coordinates:
             print(coord)
