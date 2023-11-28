@@ -157,7 +157,7 @@ names=["Select Segmentation Algorithm", "IDISF", "DISF"]
 lst = [
         [sg.Combo(names,  expand_x=True, expand_y=False, enable_events=True, default_value=names[0], readonly=True, key='-COMBO-', size=(20, 20))],
 ]
-removeOption=["Select Removal" , "1:Removal by relevance", "2:Removal by class"]
+removeOption=["Select Removal" , "1:Removal by class", "2:Removal by relevance"]
 pathCostOptions=["Select Path Cost", "1:color distance", "2:gradient-cost", "3:beta norm", "4:cv tree norm", "5:sum gradient-cost", "6: sum beta norm"]
 
 # ----- Full layout -----
@@ -242,8 +242,8 @@ while True:
             # Obtém apenas o nome do arquivo a partir do caminho completo
             filename = os.path.basename(filename_with_path)
 
-            print(f"filename with path {filename_with_path}")
-            print(f"Just filename: {filename}")
+            #print(f"filename with path {filename_with_path}")
+            #print(f"Just filename: {filename}")
 
             window["-TOUT-"].update(filename_with_path)
 
@@ -290,7 +290,7 @@ while True:
     elif event == "-COMBOREMOVAL-":
         remove_option = values["-COMBOREMOVAL-"]
 
-        if remove_option == "1:Removal by relevance":
+        if remove_option == "2:Removal by relevance":
             # Nao aparecer o campo de numero de iteracoes se a remocao for por relevancia
             window["-4IDISF-"].update(visible=False)
             window["-5IDISF-"].update(visible=False)
@@ -325,12 +325,13 @@ while True:
 
         alg = values['-COMBO-']
 
+        seeds = int(values['-1IDISF-'])
+        window["-1IDISF-"].update(f"{seeds}")
+
+        idisfCall = ""
+
         if alg == "IDISF":
-
-            seeds = int(values['-1IDISF-'])
-            window["-1IDISF-"].update(f"{seeds}")
-
-            idisfCall = f"./bin/iDISF_demo --i ../recorteImg/{filename_without_png}/*.png --n0 {seeds} --obj_markers 1 --o ../recorteImg/{filename_without_png}/segmented/*.png --xseeds xCoord --yseeds yCoord "
+            idisfCall += f"./bin/iDISF/bin/iDISF_demo --i ./recorteImg/{filename_without_png}/*.png --n0 {seeds} --obj_markers 1 --o ./recorteImg/{filename_without_png}/segmented/* --xseeds xCoord --yseeds yCoord " 
 
             try:
                 remove_option = int(values["-COMBOREMOVAL-"].split(':')[0])
@@ -341,7 +342,7 @@ while True:
                 idisfCall += f"--f {functionsPathCost} "
             except: continue
 
-            if remove_option == 1: 
+            if remove_option == 2: 
                 super_pixel = int(values['-3IDISF-'])
                 window["-3IDISF-"].update(f"{super_pixel}")
                 idisfCall += f"--nf {super_pixel} "
@@ -367,50 +368,58 @@ while True:
         else:
             super_pixel = int(values['-3IDISF-'])
             window["-3IDISF-"].update(f"{super_pixel}")
-            idisfCall += f"--nf {super_pixel} "
+
+            disfCall = f"./bin/DISF/bin/DISF_demo ./recorteImg/{filename_without_png}/*.png {seeds} {super_pixel} ./recorteImg/{filename_without_png}/segmented/*.png" 
 
         coordinates = [(x, y) for x, y, cell_id in cell_information] 
         c_ids = [cell_id for x, y, cell_id in cell_information]
         
-        print("Coordinates for", filename, ":")
-        for coord in coordinates:
-            print(coord)
+        #print("Coordinates for", filename, ":")
+        #for coord in coordinates:
+        #    print(coord)
 
-        print("Cells id for", filename, ":")
-        for ids in c_ids:
-            print(ids)
+        #print("Cells id for", filename, ":")
+        #for ids in c_ids:
+        #    print(ids)
 
         # Converta as coordenadas para o sistema de coordenadas do Pillow
         largura_imagem, altura_imagem = Image.open(filename_with_path).size
-        print("Largura da imagem: ", largura_imagem)
-        print("Altura da imagem: ", altura_imagem)
+        #print("Largura da imagem: ", largura_imagem)
+        #print("Altura da imagem: ", altura_imagem)
 
         # Adiciona a chamada da função colorize_coordinates após obter as coordenadas
         colorized_image_path = colorize_coordinates(filename_with_path, coordinates, "./colorCoordinates")
 
         print("Imagem colorizada salva em:", colorized_image_path)
 
-        # [recortar_e_salvar_imagem(filename_with_path, x, y, cell_id, cut_size, "./recorteImg") for x, y, cell_id in cell_information]
+        # Recortar imagens conforme dimensao informado na interface e coordenadas de cada celula da imagem
         resulting_coordinates = [recortar_e_salvar_imagem(filename_with_path, x, y, cell_id, cut_size, f"./recorteImg/{filename_without_png}") for x, y, cell_id in cell_information]
-        print("New coordinates:")
-        for coord in resulting_coordinates:
-            print(coord)
+        #print("New coordinates:")
+        #for coord in resulting_coordinates:
+        #    print(coord)
+
+        os.system(f"mkdir ./recorteImg/{filename_without_png}/segmented")
 
         idisfCopy = idisfCall
+        disfCopy = disfCall
 
+        # Substituir o id da celula e coordenadas para segmentacao
         for id, coord in zip(c_ids, resulting_coordinates):
+            disfCopy = disfCopy.replace('*', str(id))
             idisfCopy = idisfCopy.replace('*', str(id))
             idisfCopy = idisfCopy.replace('xCoord', str(coord[0]))
             idisfCopy = idisfCopy.replace('yCoord', str(coord[1]))
-            print(idisfCopy)
-            idisfCopy = idisfCall
-            
-            
 
-        if alg == "IDISF": 
-            os.system(f'./bin/iDISF_demo --i {filename_with_path} --n0 {seeds} --nf 2 --f 1 --o ./out.pgm --xseeds 50 --yseeds 50 --obj_markers 1 --rem 2')  
-        else: 
-            os.system(f'echo Hello')
+            if alg == "IDISF": 
+                os.system(idisfCopy)  
+            else: 
+                os.system(disfCopy)
+
+            print(disfCopy)
+
+            # Voltar *, xCoord e yCoord para serem substituidos pelos novos dados
+            idisfCopy = idisfCall
+            disfCopy = disfCall
 
     elif event == "ZOOM_IN":
         plt.imshow(image)
