@@ -350,7 +350,7 @@ while True:
                 window["-5IDISF-"].update(f"{n_iterations}")
                 idisfCall += f"--it {n_iterations} "
 
-            if (functionsPathCost != 1) | (functionsPathCost != 6):
+            if (functionsPathCost != 1) & (functionsPathCost != 6):
                 c1 = float(values['-7IDISF-'])
                 window["-7IDISF-"].update(f"{c1}")
                 idisfCall += f"--c1 {c1} "
@@ -395,6 +395,17 @@ while True:
         print("New coordinates:")
         for coord in resulting_coordinates:
             print(coord)
+
+        idisfCopy = idisfCall
+
+        for id, coord in zip(c_ids, resulting_coordinates):
+            idisfCopy = idisfCopy.replace('*', str(id))
+            idisfCopy = idisfCopy.replace('xCoord', str(coord[0]))
+            idisfCopy = idisfCopy.replace('yCoord', str(coord[1]))
+            print(idisfCopy)
+            idisfCopy = idisfCall
+            
+            
 
         if alg == "IDISF": 
             os.system(f'./bin/iDISF_demo --i {filename_with_path} --n0 {seeds} --nf 2 --f 1 --o ./out.pgm --xseeds 50 --yseeds 50 --obj_markers 1 --rem 2')  
