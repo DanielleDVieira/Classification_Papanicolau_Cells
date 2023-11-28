@@ -136,9 +136,11 @@ params_idisf = [
     [sg.Text(key="-4IDISF-", text="Number of iterations")],
     [sg.Input(key="-5IDISF-")],
     [sg.Text(key="-6IDISF-", text="c1 - Interval: [0.1,1.0]")],
-    [sg.Input(key="-7IDISF-")],
+    [sg.Slider(range=(0, 1), default_value=0, resolution=0.01, expand_x=True, enable_events=True, orientation='horizontal', key='-7IDISF-')],
+    #[sg.Input(key="-7IDISF-")],
     [sg.Text(key="-8IDISF-", text="c2 - Interval: [0.1,1.0]")],
-    [sg.Input(key="-9IDISF-")],
+    [sg.Slider(range=(0, 1), default_value=0, resolution=0.01, expand_x=True, enable_events=True, orientation='horizontal', key='-9IDISF-')],
+    #[sg.Input(key="-9IDISF-")],
 ]
 
 params_disf = [
@@ -151,12 +153,12 @@ param_values = [
     [sg.Text(text=f"Cut Size Value: {cut_size}", key="-CUTSIZEVALUE-")],
 ]
 
-names=["IDISF", "DISF"]
+names=["Select Segmentation Algorithm", "IDISF", "DISF"]
 lst = [
         [sg.Combo(names,  expand_x=True, expand_y=False, enable_events=True, default_value=names[0], readonly=True, key='-COMBO-', size=(20, 20))],
 ]
-removeOption=["1:Removal by relevance", "2:Removal by class"]
-pathCostOptions=["1:color distance", "2:gradient-cost", "3:beta norm", "4:cv tree norm", "5:sum gradient-cost", "6: sum beta norm"]
+removeOption=["Select Removal" , "1:Removal by relevance", "2:Removal by class"]
+pathCostOptions=["Select Path Cost", "1:color distance", "2:gradient-cost", "3:beta norm", "4:cv tree norm", "5:sum gradient-cost", "6: sum beta norm"]
 
 # ----- Full layout -----
 #layout = [
@@ -183,18 +185,20 @@ layout = [
             [sg.Combo(names, expand_x=True, expand_y=False, enable_events=True, default_value=names[0], readonly=True, key='-COMBO-', size=(20, 20))],
             [sg.Text(key="-0IDISF-", text="Number of init GRID seeds (>= 0)")],
             [sg.Input(key="-1IDISF-")],
-            [sg.Text(text="Seed removal options:")],
+            [sg.Text(key='-1DROP-', text="Seed removal options:")],
             [sg.Combo(removeOption, expand_x=True, expand_y=False, enable_events=True, default_value=removeOption[0], readonly=True, key='-COMBOREMOVAL-', size=(20, 20))],
             [sg.Text(key="-2IDISF-", text="Number of final superpixels:")],
             [sg.Input(key="-3IDISF-")],
             [sg.Text(key="-4IDISF-", text="Number of iterations:", visible=False)],
             [sg.Input(key="-5IDISF-", visible=False)],
-            [sg.Text(text="Path-cost function:")],
+            [sg.Text(key='-2DROP-', text="Path-cost function:")],
             [sg.Combo(pathCostOptions, expand_x=True, expand_y=False, enable_events=True, default_value=pathCostOptions[0], readonly=True, key='-COMBOPATHCOST-', size=(20, 20))],
             [sg.Text(key="-6IDISF-", text="c1 - Interval: [0.1,1.0]", visible=False)],
-            [sg.Input(key="-7IDISF-", visible=False)],
+            #[sg.Input(key="-7IDISF-", visible=False)],
+            [sg.Slider(range=(0.01, 1), default_value=0, resolution=0.01, expand_x=True, enable_events=True, orientation='horizontal', key='-7IDISF-')],
             [sg.Text(key="-8IDISF-", text="c2 - Interval: [0.1,1.0]", visible=False)],
-            [sg.Input(key="-9IDISF-", visible=False)],
+            #[sg.Input(key="-9IDISF-", visible=False)],
+            [sg.Slider(range=(0.01, 1), default_value=0, resolution=0.01, expand_x=True, enable_events=True, orientation='horizontal', key='-9IDISF-')],
             [sg.Text(key="-0DISF-", text="VASCO", visible=False)],
             [sg.Input(key="-1DISF-", visible=False)],
         ]),
@@ -250,6 +254,8 @@ while True:
     elif event == "-COMBO-":
         alg = values['-COMBO-']
         if alg == "IDISF":
+            window["-1DROP-"].update(visible=True)
+            window["-2DROP-"].update(visible=True)
             window["-COMBOREMOVAL-"].update(visible=True)
             window["-COMBOPATHCOST-"].update(visible=True)
             for i in range(len(params_disf)):
@@ -259,14 +265,14 @@ while True:
             for i in range(len(params_idisf)):
                 aux = f"-{i}IDISF-"
                 window[aux].update(visible=True)
-            print("OPA")
 
         else: 
+            window["-1DROP-"].update(visible=False)
+            window["-2DROP-"].update(visible=False)
             window["-COMBOREMOVAL-"].update(visible=False)
             window["-COMBOPATHCOST-"].update(visible=False)
 
             for i in range(len(params_idisf)):
-                print(type(i))
                 if (i != 2) & (i != 3):
                     aux = f"-{i}IDISF-"
                     window[aux].update(visible=False)
@@ -281,7 +287,7 @@ while True:
     elif event == "-COMBOREMOVAL-":
         remove_option = values["-COMBOREMOVAL-"]
 
-        if remove_option == "Removal by relevance":
+        if remove_option == "1:Removal by relevance":
             # Nao aparecer o campo de numero de iteracoes se a remocao for por relevancia
             window["-4IDISF-"].update(visible=False)
             window["-5IDISF-"].update(visible=False)
@@ -313,28 +319,42 @@ while True:
         # Chama a função getCellData com o nome do arquivo selecionado
         cell_information = getCellData(filename)
 
-        remove_option = int(values["-COMBOREMOVAL-"].split(':')[0])
-        functionsPathCost = int(values["-COMBOPATHCOST-"].split(':')[0])
+        alg = values['-COMBO-']
 
-        if remove_option == 1: 
+        if alg == "IDISF":
+
+            try:
+                remove_option = int(values["-COMBOREMOVAL-"].split(':')[0])
+            except: continue
+            try:
+                functionsPathCost = int(values["-COMBOPATHCOST-"].split(':')[0])
+            except: continue
+
+            if remove_option == 1: 
+                super_pixel = int(values['-3IDISF-'])
+                window["-3IDISF-"].update(f"{super_pixel}")
+            else: 
+                n_iterations = int(values['-5IDISF-'])
+                window["-5IDISF-"].update(f"{n_iterations}")
+
+            if (functionsPathCost != 1) | (functionsPathCost != 6):
+                c1 = float(values['-7IDISF-'])
+                window["-7IDISF-"].update(f"{c1}")
+
+                c2 = float(values['-9IDISF-'])
+                window["-9IDISF-"].update(f"{c2}")
+
+                print(f'C1: {c1} \t C2: {c2}')
+
+            cut_size = int(values["-CUTSIZE-"])
+            window["-CUTSIZE-"].update(f"{cut_size}")
+
+            seeds = int(values['-1IDISF-'])
+            window["-1IDISF-"].update(f"{seeds}")
+        
+        else:
             super_pixel = int(values['-3IDISF-'])
             window["-3IDISF-"].update(f"{super_pixel}")
-        else: 
-            n_iterations = int(values['-5IDISF-'])
-            window["-5IDISF-"].update(f"{n_iterations}")
-
-        if (functionsPathCost != 1) | (functionsPathCost != 6):
-            c1 = float(values['-7IDISF-'])
-            window["-7IDISF-"].update(f"{c1}")
-
-            c2 = float(values['-9IDISF-'])
-            window["-9IDISF-"].update(f"{c2}")
-
-        cut_size = int(values["-CUTSIZE-"])
-        window["-CUTSIZE-"].update(f"{cut_size}")
-
-        seeds = int(values['-1IDISF-'])
-        window["-1IDISF-"].update(f"{seeds}")
 
         coordinates = [(x, y) for x, y, cell_id in cell_information] 
         c_ids = [cell_id for x, y, cell_id in cell_information]
@@ -363,7 +383,10 @@ while True:
         for coord in resulting_coordinates:
             print(coord)
 
-        os.system(f'./bin/iDISF_demo --i {filename_with_path} --n0 {seeds} --nf 2 --f 1 --o ./out.pgm --xseeds 50 --yseeds 50 --obj_markers 1 --rem 2') 
+        if alg == "IDISF": 
+            os.system(f'./bin/iDISF_demo --i {filename_with_path} --n0 {seeds} --nf 2 --f 1 --o ./out.pgm --xseeds 50 --yseeds 50 --obj_markers 1 --rem 2')  
+        else: 
+            os.system(f'echo Hello')
 
     elif event == "ZOOM_IN":
         plt.imshow(image)
