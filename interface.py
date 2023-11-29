@@ -329,6 +329,7 @@ while True:
         window["-1IDISF-"].update(f"{seeds}")
 
         idisfCall = ""
+        disfCall = ""
 
         if alg == "IDISF":
             idisfCall += f"./bin/iDISF/bin/iDISF_demo --i ./recorteImg/{filename_without_png}/*.png --n0 {seeds} --obj_markers 1 --o ./recorteImg/{filename_without_png}/segmented/* --xseeds xCoord --yseeds yCoord " 
