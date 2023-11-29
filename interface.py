@@ -403,6 +403,10 @@ while True:
 
         idisfCopy = idisfCall
         disfCopy = disfCall
+        nameFileMatrix = f"./recorteImg/{filename_without_png}/segmented/*.txt"
+        copyNameFileMatrix = nameFileMatrix
+
+        centroides = []  # Vetor para armazenar os centroides
 
         # Substituir o id da celula e coordenadas para segmentacao
         for id, coord in zip(c_ids, resulting_coordinates):
@@ -411,16 +415,26 @@ while True:
             idisfCopy = idisfCopy.replace('xCoord', str(coord[0]))
             idisfCopy = idisfCopy.replace('yCoord', str(coord[1]))
 
+            copyNameFileMatrix = copyNameFileMatrix.replace('*', str(id))
+
             if alg == "IDISF": 
                 os.system(idisfCopy)  
             else: 
                 os.system(disfCopy)
 
-            print(disfCopy)
+            # Armazenar matriz de pixels de fundo e objeto lidos do arquivo txt após segmentação
+            matriz = getMatrixPixels(copyNameFileMatrix)
+            # Calcular o centroide do objeto conforme matriz
+            centroid = calculateCentroide(matriz)
+            # Adicionar o centroide ao vetor de centroides
+            centroides.append(centroid)
+
+            print(f"centroid: x={centroid[0]}, y={centroid[1]} - coordCSV: {coord}")
 
             # Voltar *, xCoord e yCoord para serem substituidos pelos novos dados
             idisfCopy = idisfCall
             disfCopy = disfCall
+            copyNameFileMatrix = nameFileMatrix
 
     elif event == "ZOOM_IN":
         plt.imshow(image)
