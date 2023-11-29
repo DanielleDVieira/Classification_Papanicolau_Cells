@@ -1,0 +1,2 @@
+/home/higoncesar/.local/lib/python3.8/site-packages/idisf.cpython-38-x86_64-linux-gnu.so
+/home/higoncesar/.local/lib/python3.8/site-packages/iDISF-1.0.egg-info

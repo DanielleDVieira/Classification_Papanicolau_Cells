@@ -332,7 +332,7 @@ while True:
         disfCall = ""
 
         if alg == "IDISF":
-            idisfCall += f"./bin/iDISF/bin/iDISF_demo --i ./recorteImg/{filename_without_png}/*.png --n0 {seeds} --obj_markers 1 --o ./recorteImg/{filename_without_png}/segmented/* --xseeds xCoord --yseeds yCoord " 
+            idisfCall += f"./src/iDISF/bin/iDISF_demo --i ./recorteImg/{filename_without_png}/*.png --n0 {seeds} --obj_markers 1 --o ./recorteImg/{filename_without_png}/segmented/* --xseeds xCoord --yseeds yCoord " 
 
             try:
                 remove_option = int(values["-COMBOREMOVAL-"].split(':')[0])
@@ -370,7 +370,7 @@ while True:
             super_pixel = int(values['-3IDISF-'])
             window["-3IDISF-"].update(f"{super_pixel}")
 
-            disfCall = f"./bin/DISF/bin/DISF_demo ./recorteImg/{filename_without_png}/*.png {seeds} {super_pixel} ./recorteImg/{filename_without_png}/segmented/*.png" 
+            disfCall = f"./src/DISF/bin/DISF_demo ./recorteImg/{filename_without_png}/*.png {seeds} {super_pixel} ./recorteImg/{filename_without_png}/segmented/*.png" 
 
         coordinates = [(x, y) for x, y, cell_id in cell_information] 
         c_ids = [cell_id for x, y, cell_id in cell_information]

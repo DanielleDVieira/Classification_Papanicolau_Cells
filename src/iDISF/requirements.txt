@@ -1,0 +1,9 @@
+Pillow
+numpy
+scipy
+opencv-python
+opencv-contrib-python
+higra
+matplotlib
+utils
+pydicom

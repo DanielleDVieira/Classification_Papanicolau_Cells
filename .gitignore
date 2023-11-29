@@ -162,3 +162,7 @@ cython_debug/
 .DS_Store
 *.swp
 .swp
+
+# Ignore creation of this archives
+recorteImg/
+colorCoordinates/
