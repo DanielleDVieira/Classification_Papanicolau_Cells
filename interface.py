@@ -9,6 +9,8 @@ from utils import *
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 import sys
+from os import listdir
+from os.path import isfile, join
 
 # Default cut size is 100
 cut_size = 100
@@ -109,7 +111,7 @@ image_viewer_column = [
     [sg.Text(size=(40, 1), key="-TOUT-")],
     [sg.Image(key="-IMAGE-")],
     # [sg.Button('Zoom In', key='ZOOM_IN'), sg.Button('Zoom Out', key='ZOOM_OUT')],
-    [sg.Button('Compute', key='COMPUTE'), sg.Button('Zoom In', key='ZOOM_IN')],
+    [sg.Button('Compute', key='COMPUTE'), sg.Button('Compute All', key='COMPUTE_ALL'), sg.Button('Zoom In', key='ZOOM_IN')],
 ]
 
 params_image_cut = [
@@ -317,8 +319,118 @@ while True:
             window["-7IDISF-"].update(visible=True)
             window["-8IDISF-"].update(visible=True)
             window["-9IDISF-"].update(visible=True)
+    elif event == "COMPUTE_ALL":
+        onlyfiles = [f for f in listdir(values["-FOLDER-"]) if isfile(join(values["-FOLDER-"], f))]
+        for i in range(len(onlyfiles)):
+            filename = os.path.basename(onlyfiles[i])
+            filename_with_path = os.path.join(
+                values["-FOLDER-"], onlyfiles[i]
+            )
+            # Chama a função getCellData com o nome do arquivo selecionado
+            cell_information = getCellData(filename)
+            filename_without_png = filename.split(".")[0]
 
-    elif event == "COMPUTE":
+            alg = values['-COMBO-']
+
+            seeds = int(values['-1IDISF-'])
+            window["-1IDISF-"].update(f"{seeds}")
+
+            idisfCall = ""
+            disfCall = ""
+
+            if alg == "IDISF":
+                idisfCall += f"./src/iDISF/bin/iDISF_demo --i ./recorteImg/{filename_without_png}/*.png --n0 {seeds} --obj_markers 1 --o ./recorteImg/{filename_without_png}/segmented/* --xseeds xCoord --yseeds yCoord " 
+
+                try:
+                    remove_option = int(values["-COMBOREMOVAL-"].split(':')[0])
+                    idisfCall += f"--rem {remove_option} "
+                except: continue
+                try:
+                    functionsPathCost = int(values["-COMBOPATHCOST-"].split(':')[0])
+                    idisfCall += f"--f {functionsPathCost} "
+                except: continue
+
+                if remove_option == 2: 
+                    super_pixel = int(values['-3IDISF-'])
+                    window["-3IDISF-"].update(f"{super_pixel}")
+                    idisfCall += f"--nf {super_pixel} "
+                else: 
+                    n_iterations = int(values['-5IDISF-'])
+                    window["-5IDISF-"].update(f"{n_iterations}")
+                    idisfCall += f"--it {n_iterations} "
+
+                if (functionsPathCost != 1) & (functionsPathCost != 6):
+                    c1 = float(values['-7IDISF-'])
+                    window["-7IDISF-"].update(f"{c1}")
+                    idisfCall += f"--c1 {c1} "
+
+                    c2 = float(values['-9IDISF-'])
+                    window["-9IDISF-"].update(f"{c2}")
+                    idisfCall += f"--c2 {c2} "
+
+                    print(f'C1: {c1} \t C2: {c2}')
+
+                cut_size = int(values["-CUTSIZE-"])
+                window["-CUTSIZE-"].update(f"{cut_size}")
+
+            else:
+                super_pixel = int(values['-3IDISF-'])
+                window["-3IDISF-"].update(f"{super_pixel}")
+
+                disfCall = f"./src/DISF/bin/DISF_demo ./recorteImg/{filename_without_png}/*.png {seeds} {super_pixel} ./recorteImg/{filename_without_png}/segmented/*.png" 
+
+            coordinates = [(x, y) for x, y, cell_id in cell_information] 
+            c_ids = [cell_id for x, y, cell_id in cell_information]
+
+            # Converta as coordenadas para o sistema de coordenadas do Pillow
+            largura_imagem, altura_imagem = Image.open(filename_with_path).size
+
+            # Adiciona a chamada da função colorize_coordinates após obter as coordenadas
+            colorized_image_path = colorize_coordinates(filename_with_path, coordinates, "./colorCoordinates")
+
+            print("Imagem colorizada salva em:", colorized_image_path)
+
+            # Recortar imagens conforme dimensao informado na interface e coordenadas de cada celula da imagem
+            resulting_coordinates = [recortar_e_salvar_imagem(filename_with_path, x, y, cell_id, cut_size, f"./recorteImg/{filename_without_png}") for x, y, cell_id in cell_information]
+
+            os.system(f"mkdir ./recorteImg/{filename_without_png}/segmented")
+
+            idisfCopy = idisfCall
+            disfCopy = disfCall
+            nameFileMatrix = f"./recorteImg/{filename_without_png}/segmented/*.txt"
+            copyNameFileMatrix = nameFileMatrix
+
+            medoides = []  # Vetor para armazenar os medoides
+
+            # Substituir o id da celula e coordenadas para segmentacao
+            for id, coord in zip(c_ids, resulting_coordinates):
+                disfCopy = disfCopy.replace('*', str(id))
+                idisfCopy = idisfCopy.replace('*', str(id))
+                idisfCopy = idisfCopy.replace('xCoord', str(coord[0]))
+                idisfCopy = idisfCopy.replace('yCoord', str(coord[1]))
+
+                copyNameFileMatrix = copyNameFileMatrix.replace('*', str(id))
+
+                if alg == "IDISF": 
+                    os.system(idisfCopy)  
+                else: 
+                    os.system(disfCopy)
+
+                # Armazenar matriz de pixels de fundo e objeto lidos do arquivo txt após segmentação
+                matriz = getMatrixPixels(copyNameFileMatrix)
+                # Calcular o medoide do objeto conforme matriz
+                medoide = calculateMedoide(matriz)
+                # Adicionar o medoide ao vetor de medoides
+                medoides.append(medoide)
+
+                print(f"Medoide: x={medoide[0]}, y={medoide[1]} - coordCSV: {coord}")
+
+                # Voltar *, xCoord e yCoord para serem substituidos pelos novos dados
+                idisfCopy = idisfCall
+                disfCopy = disfCall
+                copyNameFileMatrix = nameFileMatrix
+
+    elif event == "COMPUTE":        
         # Chama a função getCellData com o nome do arquivo selecionado
         cell_information = getCellData(filename)
         filename_without_png = filename.split(".")[0]
@@ -406,7 +518,7 @@ while True:
         nameFileMatrix = f"./recorteImg/{filename_without_png}/segmented/*.txt"
         copyNameFileMatrix = nameFileMatrix
 
-        centroides = []  # Vetor para armazenar os centroides
+        medoides = []  # Vetor para armazenar os medoides
 
         # Substituir o id da celula e coordenadas para segmentacao
         for id, coord in zip(c_ids, resulting_coordinates):
@@ -424,12 +536,12 @@ while True:
 
             # Armazenar matriz de pixels de fundo e objeto lidos do arquivo txt após segmentação
             matriz = getMatrixPixels(copyNameFileMatrix)
-            # Calcular o centroide do objeto conforme matriz
-            centroid = calculateCentroide(matriz)
-            # Adicionar o centroide ao vetor de centroides
-            centroides.append(centroid)
+            # Calcular o medoide do objeto conforme matriz
+            medoide = calculateMedoide(matriz)
+            # Adicionar o medoide ao vetor de medoides
+            medoides.append(medoide)
 
-            print(f"centroid: x={centroid[0]}, y={centroid[1]} - coordCSV: {coord}")
+            print(f"Medoide: x={medoide[0]}, y={medoide[1]} - coordCSV: {coord}")
 
             # Voltar *, xCoord e yCoord para serem substituidos pelos novos dados
             idisfCopy = idisfCall
@@ -441,4 +553,3 @@ while True:
         plt.show()
 
 window.close()
-os.system('rm -r recorteImg && rm -r colorCoordinates')
