@@ -1,4 +1,5 @@
 import pandas as pd
+import math as mth
 
 #######################################################
 # Method to filter information from desired image
@@ -42,15 +43,16 @@ def getMatrixPixels(fileName):
 
 
 #######################################################
-# Calculate the centroid coordinate of a region 
+# Calculate the medoide coordinate of a region 
 # representing an object in an image
 # @param: matriz - Matrix containing the object region
-# returns: centroide
+# returns: medoide
 #######################################################
-def calculateCentroide(matriz):
+def calculateMedoide(matriz):
     linhas = len(matriz)
     colunas = len(matriz[0])
     soma_x, soma_y, count = 0, 0, 0
+    menor_dist = 1000000
 
     for i in range(linhas):
         for j in range(colunas):
@@ -63,8 +65,20 @@ def calculateCentroide(matriz):
         centroide_x = soma_x / count  # Calcula a média das coordenadas x
         centroide_y = soma_y / count  # Calcula a média das coordenadas y
         centroide = (centroide_x, centroide_y)
-        #print(f"Centroide: x={centroide_x}, y={centroide_y}")
+        print(f"Centroide: x={centroide_x}, y={centroide_y}")
     else:
         print("Nenhum pixel de objeto encontrado na matriz.")
 
-    return centroide
+    for i in range(linhas):
+        for j in range(colunas):
+            if matriz[i][j] == 1:
+                dist = mth.dist([i, j], [centroide[0], centroide[1]])
+                if ( dist <= menor_dist ):
+                    menor_dist = dist
+                    medoide_x = j
+                    medoide_y = i
+                    medoide = (medoide_x, medoide_y)
+
+    
+
+    return medoide
