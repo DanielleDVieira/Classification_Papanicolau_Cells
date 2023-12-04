@@ -1,16 +1,21 @@
 # python3 interface.py
 # img_viewer.py
 
+from utils import *
+from PIL import Image, ImageTk, ImageDraw
+from os import listdir
+from os.path import isfile, join
+from skimage import measure
 import PySimpleGUI as sg
 import os.path
 import io
-from PIL import Image, ImageTk, ImageDraw
-from utils import *
+import math as mth
+import cv2
+import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 import sys
-from os import listdir
-from os.path import isfile, join
+
 
 # Default cut size is 100
 cut_size = 100
@@ -401,7 +406,12 @@ while True:
             copyNameFileMatrix = nameFileMatrix
 
             medoides = []  # Vetor para armazenar os medoides
-
+            # Creating folder to save all metrics that will be calculated
+            metrics_path = f"./data"
+            metrics_file = f"{metrics_path}/metrics.csv"            
+            os.system(f"mkdir {metrics_path}")
+            
+            result = ""
             # Substituir o id da celula e coordenadas para segmentacao
             for id, coord in zip(c_ids, resulting_coordinates):
                 disfCopy = disfCopy.replace('*', str(id))
@@ -424,11 +434,30 @@ while True:
                 medoides.append(medoide)
 
                 print(f"Medoide: x={medoide[0]}, y={medoide[1]} - coordCSV: {coord}")
+                dist = mth.dist(medoide, coord)
+                area = cv2.countNonZero(np.ravel(matriz))
+                contornos = measure.find_contours(np.asarray(matriz))
+                maior_contorno = max(contornos, key=len)
+                perimetro = len(maior_contorno)
+                compacidade = (4 * np.pi * area) / (perimetro ** 2)
+                rotulado = measure.label(np.asarray(matriz))
+                propriedades = measure.regionprops(rotulado)
+                maior_regiao = max(propriedades, key=lambda x: x.area)
+                excentricidade = maior_regiao.eccentricity
+
+                result += f"{id};({medoide[0]},{medoide[1]});({coord[0]},{coord[1]});{dist};{area};{perimetro};{compacidade};{excentricidade}\n"
+
 
                 # Voltar *, xCoord e yCoord para serem substituidos pelos novos dados
                 idisfCopy = idisfCall
                 disfCopy = disfCall
                 copyNameFileMatrix = nameFileMatrix
+
+
+            file_metrics = open(metrics_file, "a")
+            file_metrics.write("ID;MedoideCalculado;CoordCSV;DistanciaDoCentro;Area;Perimetro;Compacidade;Excentricidade\n")
+            file_metrics.write(result)
+            file_metrics.close()
 
     elif event == "COMPUTE":        
         # Chama a função getCellData com o nome do arquivo selecionado
@@ -520,6 +549,14 @@ while True:
 
         medoides = []  # Vetor para armazenar os medoides
 
+
+        # Creating folder to save all metrics that will be calculated
+        metrics_path = f"./data"
+        metrics_file = f"{metrics_path}/metrics.csv"            
+        os.system(f"mkdir {metrics_path}")
+
+
+        result = ""
         # Substituir o id da celula e coordenadas para segmentacao
         for id, coord in zip(c_ids, resulting_coordinates):
             disfCopy = disfCopy.replace('*', str(id))
@@ -542,14 +579,34 @@ while True:
             medoides.append(medoide)
 
             print(f"Medoide: x={medoide[0]}, y={medoide[1]} - coordCSV: {coord}")
+            dist = mth.dist(medoide, coord)
+            area = cv2.countNonZero(np.ravel(matriz))
+            contornos = measure.find_contours(np.asarray(matriz))
+            maior_contorno = max(contornos, key=len)
+            perimetro = len(maior_contorno)
+            compacidade = (4 * np.pi * area) / (perimetro ** 2)
+            rotulado = measure.label(np.asarray(matriz))
+            propriedades = measure.regionprops(rotulado)
+            maior_regiao = max(propriedades, key=lambda x: x.area)
+            excentricidade = maior_regiao.eccentricity
+
+            result += f"{id};({medoide[0]},{medoide[1]});({coord[0]},{coord[1]});{dist};{area};{perimetro};{compacidade};{excentricidade}\n"
+
 
             # Voltar *, xCoord e yCoord para serem substituidos pelos novos dados
             idisfCopy = idisfCall
             disfCopy = disfCall
             copyNameFileMatrix = nameFileMatrix
 
+
+        file_metrics = open(metrics_file, "a")
+        file_metrics.write("ID;MedoideCalculado;CoordCSV;DistanciaDoCentro;Area;Perimetro;Compacidade;Excentricidade\n")
+        file_metrics.write(result)
+        file_metrics.close()
+
     elif event == "ZOOM_IN":
         plt.imshow(image)
         plt.show()
 
 window.close()
+os.system(f"rm {metrics_path}")
