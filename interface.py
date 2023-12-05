@@ -10,7 +10,7 @@ import PySimpleGUI as sg
 import os.path
 import io
 import math as mth
-import cv2
+# import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
@@ -213,9 +213,12 @@ layout = [
         sg.Column(image_viewer_column),
     ]
 ]
-
+metrics_path = f"./data"
+metrics_file = f"{metrics_path}/metrics.csv"  
 os.system("mkdir recorteImg && mkdir colorCoordinates")
 window = sg.Window("Image Viewer", layout, resizable=True)
+file_metrics = open(metrics_file, "w")
+file_metrics.write("ID;MedoideCalculado;CoordCSV;DistanciaDoCentro;Area;Perimetro;Compacidade;Excentricidade\n")
 
 # Run the Event Loop
 while True:
@@ -435,7 +438,7 @@ while True:
 
                 print(f"Medoide: x={medoide[0]}, y={medoide[1]} - coordCSV: {coord}")
                 dist = mth.dist(medoide, coord)
-                area = cv2.countNonZero(np.ravel(matriz))
+                area = np.count_nonzero(np.ravel(matriz))
                 contornos = measure.find_contours(np.asarray(matriz))
                 maior_contorno = max(contornos, key=len)
                 perimetro = len(maior_contorno)
@@ -580,7 +583,7 @@ while True:
 
             print(f"Medoide: x={medoide[0]}, y={medoide[1]} - coordCSV: {coord}")
             dist = mth.dist(medoide, coord)
-            area = cv2.countNonZero(np.ravel(matriz))
+            area = np.count_nonzero(np.ravel(matriz))
             contornos = measure.find_contours(np.asarray(matriz))
             maior_contorno = max(contornos, key=len)
             perimetro = len(maior_contorno)
@@ -600,7 +603,6 @@ while True:
 
 
         file_metrics = open(metrics_file, "a")
-        file_metrics.write("ID;MedoideCalculado;CoordCSV;DistanciaDoCentro;Area;Perimetro;Compacidade;Excentricidade\n")
         file_metrics.write(result)
         file_metrics.close()
 
