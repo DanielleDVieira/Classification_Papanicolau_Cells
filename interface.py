@@ -458,7 +458,6 @@ while True:
 
 
             file_metrics = open(metrics_file, "a")
-            file_metrics.write("ID;MedoideCalculado;CoordCSV;DistanciaDoCentro;Area;Perimetro;Compacidade;Excentricidade\n")
             file_metrics.write(result)
             file_metrics.close()
 
