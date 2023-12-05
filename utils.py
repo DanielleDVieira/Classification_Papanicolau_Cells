@@ -75,8 +75,8 @@ def calculateMedoide(matriz):
                 dist = mth.dist([i, j], [centroide[0], centroide[1]])
                 if ( dist <= menor_dist ):
                     menor_dist = dist
-                    medoide_x = j
-                    medoide_y = i
+                    medoide_x = i
+                    medoide_y = j
                     medoide = (medoide_x, medoide_y)
 
     
