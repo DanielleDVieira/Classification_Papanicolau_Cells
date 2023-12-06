@@ -2,6 +2,7 @@
 # img_viewer.py
 
 from utils import *
+from mahalanobis import *
 from PIL import Image, ImageTk, ImageDraw
 from os import listdir
 from os.path import isfile, join
@@ -117,6 +118,7 @@ image_viewer_column = [
     [sg.Image(key="-IMAGE-")],
     # [sg.Button('Zoom In', key='ZOOM_IN'), sg.Button('Zoom Out', key='ZOOM_OUT')],
     [sg.Button('Compute', key='COMPUTE'), sg.Button('Compute All', key='COMPUTE_ALL'), sg.Button('Zoom In', key='ZOOM_IN')],
+    [sg.Button('Mahalanobis Binary Classifier', key='MAHALANOBIS_BINARY'), sg.Button('Mahalanobis Multiclass Classifier', key='MAHALANOBIS_MULTICLASS')],
 ]
 
 params_image_cut = [
@@ -394,11 +396,12 @@ while True:
             largura_imagem, altura_imagem = Image.open(filename_with_path).size
 
             # Adiciona a chamada da função colorize_coordinates após obter as coordenadas
-            colorized_image_path = colorize_coordinates(filename_with_path, coordinates, "./colorCoordinates")
+            #colorized_image_path = colorize_coordinates(filename_with_path, coordinates, "./colorCoordinates")
 
-            print("Imagem colorizada salva em:", colorized_image_path)
+            #print("Imagem colorizada salva em:", colorized_image_path)
 
             # Recortar imagens conforme dimensao informado na interface e coordenadas de cada celula da imagem
+            # resulting_coordinates = [recortar_e_salvar_imagem(filename_with_path, x, y, cell_id, cut_size, f"./recorteImg/") for x, y, cell_id in cell_information]
             resulting_coordinates = [recortar_e_salvar_imagem(filename_with_path, x, y, cell_id, cut_size, f"./recorteImg/{filename_without_png}") for x, y, cell_id in cell_information]
 
             os.system(f"mkdir ./recorteImg/{filename_without_png}/segmented")
@@ -608,6 +611,12 @@ while True:
     elif event == "ZOOM_IN":
         plt.imshow(image)
         plt.show()
+
+    elif event == "MAHALANOBIS_BINARY":
+        
+        # Classificador binário das células com a distância de Mahalanobis
+        MahalanobisBinaryClassifier(filename)
+
 
 window.close()
 os.system(f"rm {metrics_path}")

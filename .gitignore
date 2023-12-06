@@ -166,3 +166,4 @@ cython_debug/
 # Ignore creation of this archives
 recorteImg/
 colorCoordinates/
+cells/
