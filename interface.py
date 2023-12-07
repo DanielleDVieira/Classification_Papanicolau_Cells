@@ -117,7 +117,7 @@ image_viewer_column = [
     [sg.Text(size=(40, 1), key="-TOUT-")],
     [sg.Image(key="-IMAGE-")],
     # [sg.Button('Zoom In', key='ZOOM_IN'), sg.Button('Zoom Out', key='ZOOM_OUT')],
-    [sg.Button('Compute', key='COMPUTE'), sg.Button('Compute All', key='COMPUTE_ALL'), sg.Button('Zoom In', key='ZOOM_IN')],
+    [sg.Button('Compute', key='COMPUTE'), sg.Button('Compute All', key='COMPUTE_ALL'), sg.Button('Zoom In', key='ZOOM_IN'), sg.Button('Malahanobis Train', key='MAHALANOBIS_TRAIN')],
     [sg.Button('Mahalanobis Binary Classifier', key='MAHALANOBIS_BINARY'), sg.Button('Mahalanobis Multiclass Classifier', key='MAHALANOBIS_MULTICLASS')],
 ]
 
@@ -215,12 +215,14 @@ layout = [
         sg.Column(image_viewer_column),
     ]
 ]
-metrics_path = f"./data"
-metrics_file = f"{metrics_path}/metrics.csv"  
 os.system("mkdir recorteImg && mkdir colorCoordinates")
 window = sg.Window("Image Viewer", layout, resizable=True)
-file_metrics = open(metrics_file, "w")
-file_metrics.write("ID;MedoideCalculado;CoordCSV;DistanciaDoCentro;Area;Perimetro;Compacidade;Excentricidade\n")
+metrics_path = f"./data"
+
+# metrics_file = f"{metrics_path}/metrics.csv"  
+# file_metrics = open(metrics_file, "w")
+# file_metrics.write("ID;MedoideCalculado;CoordCSV;DistanciaDoCentro;Area;Perimetro;Compacidade;Excentricidade\n")
+# file_metrics.close()
 
 # Run the Event Loop
 while True:
@@ -414,7 +416,7 @@ while True:
             medoides = []  # Vetor para armazenar os medoides
             # Creating folder to save all metrics that will be calculated
             metrics_path = f"./data"
-            metrics_file = f"{metrics_path}/metrics.csv"            
+            metrics_file = f"{metrics_path}/metricsAll.csv"            
             os.system(f"mkdir {metrics_path}")
             
             result = ""
@@ -460,7 +462,8 @@ while True:
                 copyNameFileMatrix = nameFileMatrix
 
 
-            file_metrics = open(metrics_file, "a")
+            file_metrics = open(metrics_file, "w")
+            file_metrics.write("ID;MedoideCalculado;CoordCSV;DistanciaDoCentro;Area;Perimetro;Compacidade;Excentricidade\n")            
             file_metrics.write(result)
             file_metrics.close()
 
@@ -604,7 +607,8 @@ while True:
             copyNameFileMatrix = nameFileMatrix
 
 
-        file_metrics = open(metrics_file, "a")
+        file_metrics = open(metrics_file, "w")
+        file_metrics.write("ID;MedoideCalculado;CoordCSV;DistanciaDoCentro;Area;Perimetro;Compacidade;Excentricidade\n")
         file_metrics.write(result)
         file_metrics.close()
 
@@ -612,10 +616,21 @@ while True:
         plt.imshow(image)
         plt.show()
 
+    elif event == "MAHALANOBIS_TRAIN":
+        os.system("mkdir ./data/mahalanobis_train_data")
+        os.system("mkdir ./data/mahalanobis_train_data/binary")
+        os.system("mkdir ./data/mahalanobis_train_data/six_classes")
+        MahalanobisTrain()
+
     elif event == "MAHALANOBIS_BINARY":
         
         # Classificador binário das células com a distância de Mahalanobis
         MahalanobisBinaryClassifier(filename)
+
+    elif event == "MAHALANOBIS_MULTICLASS":
+
+        # Classificador de Seis Classses das células com a distância de Mahalanobis
+        MahalanobisSixClassifier(filename)
 
 
 window.close()
