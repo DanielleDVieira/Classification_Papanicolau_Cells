@@ -55,6 +55,7 @@ def MahalanobisTrain():
     plt.xlabel("Área", size=15)
     plt.ylabel("Excentricidade", size=15)
     plt.tight_layout()
+    plt.savefig(f"./matrizConfusao/ScatterPlot.png")
     plt.show()
 
     Counter(list(df['bethesda_system']))
@@ -145,27 +146,30 @@ def MahalanobisTrain():
     }, inplace=True)
     print(y_test.value_counts())
 
-    acuracia = me.accuracy_score(y_test, classification)
+    acuracia = me.accuracy_score(y_test, classification) * 100
     print("Acurácia:", acuracia)
 
-    precisao = me.precision_score(y_test, classification)
+    precisao = me.precision_score(y_test, classification) * 100
     print("Precisão:", precisao)
 
-    sensibilidade = me.recall_score(y_test, classification)
+    sensibilidade = me.recall_score(y_test, classification) * 100
     print("Sensibilidade (Revocação):", sensibilidade)
 
     cm = me.confusion_matrix(y_test, classification)
     classes = ['Negative', 'Positive']  # Mapeamento para 0 e 1
+    fig, ax = plt.subplots(figsize=(8, 8))
     disp = me.ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=classes)
-    disp.plot(include_values=True, cmap='Blues', ax=None, xticks_rotation='horizontal')
+    disp.plot(include_values=True, cmap='Blues', ax=ax, xticks_rotation='horizontal')
     # Modificando os rótulos do eixo x
     plt.xticks(ticks=[0, 1], labels=classes)
     # Adicionando título
-    plt.title('Matriz de confusão para classificação binária com Mahalanobis')
+    plt.title('Matriz de confusão para classificação binária com Mahalanobis', pad=60, weight='bold', ha='center')
+    plt.text(0.5, -0.15, f'Acurácia: {acuracia:.2f}%', ha='center', fontsize=10, transform=ax.transAxes, weight='bold')
+    plt.text(0.5, -0.2, f'Precisão: {precisao:.2f}%', ha='center', fontsize=10, transform=ax.transAxes, weight='bold')
+    plt.text(0.5, -0.25, f'Sensibilidade: {sensibilidade:.2f}%', ha='center', fontsize=10, transform=ax.transAxes, weight='bold')
+    plt.savefig(f"./matrizConfusao/binary.png")
     # Exibindo a matriz de confusão
     plt.show()
-
-
 
     """# Train test split Six Classes """
     print(scc.head())
@@ -350,23 +354,28 @@ def MahalanobisTrain():
     }, inplace=True)
 
 
-    acuracia = me.accuracy_score(y_test, classification)
+    acuracia = me.accuracy_score(y_test, classification) * 100
     print("Acurácia:", acuracia)
 
-    precisao = me.precision_score(y_test, classification, average='micro')
+    precisao = me.precision_score(y_test, classification, average='micro') * 100
     print("Precisão:", precisao)
 
-    sensibilidade = me.recall_score(y_test, classification, average='micro')
+    sensibilidade = me.recall_score(y_test, classification, average='micro') * 100
     print("Sensibilidade (Revocação):", sensibilidade)
 
     cm = me.confusion_matrix(y_test, classification)
     classes = ['Negative', 'SCC', 'LSIL', 'HSIL', 'ASC-H', 'ASC-US']  # Mapeamento para 0 e 1
+    fig, ax = plt.subplots(figsize=(8, 8))
     disp = me.ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=classes)
-    disp.plot(include_values=True, cmap='Blues', ax=None, xticks_rotation='horizontal')
+    disp.plot(include_values=True, cmap='Blues', ax=ax, xticks_rotation='horizontal')
     # Modificando os rótulos do eixo x
     plt.xticks(ticks=[0, 1, 2, 3, 4, 5], labels=classes)
     # Adicionando título
-    plt.title('Matriz de confusão para classificação binária com Mahalanobis')
+    plt.title('Matriz de confusão para classificação multiclasse com Mahalanobis', pad=60, weight='bold', ha='center')
+    plt.text(0.5, -0.15, f'Acurácia: {acuracia:.2f}%', ha='center', fontsize=10, transform=ax.transAxes, weight='bold')
+    plt.text(0.5, -0.2, f'Precisão: {precisao:.2f}%', ha='center', fontsize=10, transform=ax.transAxes, weight='bold')
+    plt.text(0.5, -0.25, f'Sensibilidade: {sensibilidade:.2f}%', ha='center', fontsize=10, transform=ax.transAxes, weight='bold')
+    plt.savefig(f"./matrizConfusao/multiclasse.png")
     # Exibindo a matriz de confusão
     plt.show()
 
@@ -399,7 +408,6 @@ def MahalanobisBinaryClassifier(filename):
     # Calcular a distância de Mahalanobis para cada amostra de teste
     distances_neg = [mahalanobis_dist(sample, mean_neg, cov_neg) for sample in features_test]
     distances_positive = [mahalanobis_dist(sample, mean_positive, cov_positive) for sample in features_test]
-    print(f"ALOO {len(distances_neg)}")
     df['Classification'] = -1
     classification = []
 
@@ -415,6 +423,17 @@ def MahalanobisBinaryClassifier(filename):
 
     print(len(features_test_id))
 
+    # Acrescentar no dataframe que contem os descritores da imagem a coluna com sua classificacao
+    metrics['Classification'] = classification
+    # Acrescentar no dataframe que contem os descritores da imagem a coluna com a classificacao correta
+    metrics['Correct_Classification'] = y_test['bethesda_system'].values
+    # Substituir os valores na coluna 'Classe'
+    mapeamento = {0: 'Negative', 1: 'Positive'}
+    metrics['Classification'] = metrics['Classification'].replace(mapeamento)
+
+    # Gravar novo arquivo csv com a classificacao binaria das células
+    filename_without_png = filename.split(".")[0]
+    metrics.to_csv(f'./data/classificationCell/metrics_binary_{filename_without_png}.csv', index=False)
 
     y_test.replace({
         'Negative for intraepithelial lesion': 0,
@@ -426,23 +445,30 @@ def MahalanobisBinaryClassifier(filename):
     }, inplace=True)
     print(f"{y_test.value_counts()}")
 
-    acuracia = me.accuracy_score(y_test, classification)
+    acuracia = me.accuracy_score(y_test, classification) * 100
     print("Acurácia:", acuracia)
 
-    precisao = me.precision_score(y_test, classification, zero_division=0)
+    precisao = me.precision_score(y_test, classification, zero_division=0) * 100
     print("Precisão:", precisao)
 
-    sensibilidade = me.recall_score(y_test, classification, zero_division=0)
+    sensibilidade = me.recall_score(y_test, classification, zero_division=0) * 100
     print("Sensibilidade (Revocação):", sensibilidade)
 
     cm = me.confusion_matrix(y_test, classification)
-    classes = ['Negative', 'Positive']  # Mapeamento para 0 e 1
+    #classes = ['Negative', 'Positive']  # Mapeamento para 0 e 1
+    # Plotando a matriz de confusão
+    fig, ax = plt.subplots(figsize=(8, 8))
     disp = me.ConfusionMatrixDisplay(confusion_matrix=cm)
-    disp.plot(include_values=True, cmap='Blues', ax=None, xticks_rotation='horizontal')
+    disp.plot(include_values=True, cmap='Blues', ax=ax, xticks_rotation='horizontal')
     # Adicionando título
-    plt.title('Matriz de confusão para classificação binária com Mahalanobis')
+    plt.title('Matriz de confusão para classificação binária com Mahalanobis', pad=60, weight='bold', ha='center')
+    plt.text(0.5, -0.15, f'Acurácia: {acuracia:.2f}%', ha='center', fontsize=10, transform=ax.transAxes, weight='bold')
+    plt.text(0.5, -0.2, f'Precisão: {precisao:.2f}%', ha='center', fontsize=10, transform=ax.transAxes, weight='bold')
+    plt.text(0.5, -0.25, f'Sensibilidade: {sensibilidade:.2f}%', ha='center', fontsize=10, transform=ax.transAxes, weight='bold')
+    plt.savefig(f"./matrizConfusao/binary_Cell_{filename}")
     # Exibindo a matriz de confusão
     plt.show()
+
 
 # Função que classifica as células da imagem com a distância de Mahalanobis
 def MahalanobisSixClassifier(filename):
@@ -531,6 +557,18 @@ def MahalanobisSixClassifier(filename):
 
     print(len(features_test_id))
 
+    # Acrescentar no dataframe que contem os descritores da imagem a coluna com sua classificacao
+    metrics['Classification'] = classification
+    # Acrescentar no dataframe que contem os descritores da imagem a coluna com a classificacao correta
+    metrics['Correct_Classification'] = y_test['bethesda_system'].values
+    # Substituir os valores na coluna 'Classe'
+    mapeamento = {0: 'Negative', 1: 'SCC', 2: 'LSIL', 3: 'HSIL', 4: 'ASC-H', 5: 'ASC-US'}
+    metrics['Classification'] = metrics['Classification'].replace(mapeamento)
+    print(metrics)
+    # Gravar novo arquivo csv com a classificacao binaria das células
+    filename_without_png = filename.split(".")[0]
+    metrics.to_csv(f'./data/classificationCell/metrics_multiclass_{filename_without_png}.csv', index=False)
+
     y_test.replace({
         'Negative for intraepithelial lesion': 0,
         'SCC': 1,
@@ -541,24 +579,28 @@ def MahalanobisSixClassifier(filename):
     }, inplace=True)
     print(f"{y_test.value_counts()}")
 
-    acuracia = me.accuracy_score(y_test, classification)
+    acuracia = me.accuracy_score(y_test, classification) * 100
     print("Acurácia:", acuracia)
 
-    precisao = me.precision_score(y_test, classification, average='micro')
+    precisao = me.precision_score(y_test, classification, average='micro') * 100
     print("Precisão:", precisao)
 
-    sensibilidade = me.recall_score(y_test, classification, average='micro')
+    sensibilidade = me.recall_score(y_test, classification, average='micro') * 100
     print("Sensibilidade (Revocação):", sensibilidade)
 
     cm = me.confusion_matrix(y_test, classification)
-    classes = ['Negative', 'SCC', 'LSIL', 'HSIL', 'ASC-H', 'ASC-US']  # Mapeamento para 0 1 2 3 4 5
+    #classes = ['Negative', 'SCC', 'LSIL', 'HSIL', 'ASC-H', 'ASC-US']  # Mapeamento para 0 1 2 3 4 5
+    fig, ax = plt.subplots(figsize=(8, 8))
     #disp = me.ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=classes)
-    #disp.plot(include_values=True, cmap='Blues', ax=None, xticks_rotation='horizontal')
     disp = me.ConfusionMatrixDisplay(confusion_matrix=cm)
-    disp.plot(include_values=True, cmap='Blues', ax=None, xticks_rotation='horizontal')
-    # Modificando os rótulos do eixo x
-    #plt.xticks(ticks=[0, 1], labels=classes)
+    disp.plot(include_values=True, cmap='Blues', ax=ax, xticks_rotation='horizontal')
     # Adicionando título
-    plt.title('Matriz de confusão para classificação binária com Mahalanobis')
+    plt.title('Matriz de confusão para classificação multiclasse com Mahalanobis', pad=60, weight='bold', ha='center')
+    plt.text(0.5, -0.15, f'Acurácia: {acuracia:.2f}%', ha='center', fontsize=10, transform=ax.transAxes, weight='bold')
+    plt.text(0.5, -0.2, f'Precisão: {precisao:.2f}%', ha='center', fontsize=10, transform=ax.transAxes, weight='bold')
+    plt.text(0.5, -0.25, f'Sensibilidade: {sensibilidade:.2f}%', ha='center', fontsize=10, transform=ax.transAxes, weight='bold')
+    plt.savefig(f"./matrizConfusao/multiclasse_Cell_{filename}")
     # Exibindo a matriz de confusão
     plt.show()
+
+    

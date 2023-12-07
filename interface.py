@@ -16,6 +16,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 import sys
+import shutil
 
 
 # Default cut size is 100
@@ -216,6 +217,8 @@ layout = [
     ]
 ]
 os.system("mkdir recorteImg && mkdir colorCoordinates")
+os.system("mkdir matrizConfusao")
+os.system("mkdir ./data/classificationCell")
 window = sg.Window("Image Viewer", layout, resizable=True)
 metrics_path = f"./data"
 
@@ -635,3 +638,7 @@ while True:
 
 window.close()
 os.system(f"rm {metrics_path}")
+os.remove("./data/metrics.csv")
+shutil.rmtree("./data/classificationCell")
+shutil.rmtree("./data/mahalanobis_train_data")
+shutil.rmtree("./matrizConfusao")
