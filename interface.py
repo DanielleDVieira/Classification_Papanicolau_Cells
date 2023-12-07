@@ -1,8 +1,8 @@
 # python3 interface.py
-# img_viewer.py
 
 from utils import *
 from mahalanobis import *
+from cnn import *
 from PIL import Image, ImageTk, ImageDraw
 from os import listdir
 from os.path import isfile, join
@@ -97,8 +97,7 @@ def recortar_e_salvar_imagem(nome_imagem, x, y, cells_id, dimensao_recorte, past
 
     return nova_coordenada_x, nova_coordenada_y
 
-# First the window layout in 2 columns
-
+# Primeiro o layout da janela em 2 colunas
 file_list_column = [
     [
         sg.Text("Image Folder"),
@@ -112,31 +111,19 @@ file_list_column = [
     ],
 ]
 
-# For now will only show the name of the file that was chosen
 image_viewer_column = [
     [sg.Text("Choose an image from list on left:")],
     [sg.Text(size=(40, 1), key="-TOUT-")],
     [sg.Image(key="-IMAGE-")],
-    # [sg.Button('Zoom In', key='ZOOM_IN'), sg.Button('Zoom Out', key='ZOOM_OUT')],
     [sg.Button('Compute', key='COMPUTE'), sg.Button('Compute All', key='COMPUTE_ALL'), sg.Button('Zoom In', key='ZOOM_IN'), sg.Button('Malahanobis Train', key='MAHALANOBIS_TRAIN')],
     [sg.Button('Mahalanobis Binary Classifier', key='MAHALANOBIS_BINARY'), sg.Button('Mahalanobis Multiclass Classifier', key='MAHALANOBIS_MULTICLASS')],
+    [sg.Button('CNN Binary Classifier', key='CNN_BINARY'), sg.Button('CNN Multiclass Classifier', key='CNN_MULTICLASS')],
 ]
 
 params_image_cut = [
     [sg.Text(text="Size (px) of image cut")],
     [sg.Input(key="-CUTSIZE-")],
 ]
-
-
-#params_idisf= [
-#   [sg.Text(key="-0IDISF-", text="Number of Seeds", visible=True)],
-#   [sg.Input(key="-1IDISF-", visible=True)],
-#]
-
-#params_disf = [
-#    [sg.Text(key="-0DISF-", text="VASCO", visible=False)],
-#    [sg.Input(key="-1DISF-", visible=False)],
-#]
 
 params_idisf = [
     [sg.Text(key="-0IDISF-", text="Number of init GRID seeds (>= 0)")],
@@ -147,10 +134,8 @@ params_idisf = [
     [sg.Input(key="-5IDISF-")],
     [sg.Text(key="-6IDISF-", text="c1 - Interval: [0.1,1.0]")],
     [sg.Slider(range=(0, 1), default_value=0, resolution=0.01, expand_x=True, enable_events=True, orientation='horizontal', key='-7IDISF-')],
-    #[sg.Input(key="-7IDISF-")],
     [sg.Text(key="-8IDISF-", text="c2 - Interval: [0.1,1.0]")],
     [sg.Slider(range=(0, 1), default_value=0, resolution=0.01, expand_x=True, enable_events=True, orientation='horizontal', key='-9IDISF-')],
-    #[sg.Input(key="-9IDISF-")],
 ]
 
 params_disf = [
@@ -169,19 +154,6 @@ lst = [
 ]
 removeOption=["Select Removal" , "1:Removal by class", "2:Removal by relevance"]
 pathCostOptions=["Select Path Cost", "1:color distance", "2:gradient-cost", "3:beta norm", "4:cv tree norm", "5:sum gradient-cost", "6: sum beta norm"]
-
-# ----- Full layout -----
-#layout = [
-#    [
-#        sg.Column(file_list_column),
-#        sg.VSeperator(),
-#        sg.Column(image_viewer_column),
-#        sg.VSeparator(),
-#        [(params_image_cut), (lst)],
-#        sg.Column(params_idisf, vertical_alignment='top'),
-#        sg.Column(params_disf, vertical_alignment='top'),
-#    ]
-#]
 
 # Layout atualizado com a única coluna para exibir os parâmetros correspondentes à escolha no dropdown
 layout = [
@@ -204,10 +176,8 @@ layout = [
             [sg.Text(key='-2DROP-', text="Path-cost function:")],
             [sg.Combo(pathCostOptions, expand_x=True, expand_y=False, enable_events=True, default_value=pathCostOptions[0], readonly=True, key='-COMBOPATHCOST-', size=(20, 20))],
             [sg.Text(key="-6IDISF-", text="c1 - Interval: [0.1,1.0]", visible=False)],
-            #[sg.Input(key="-7IDISF-", visible=False)],
             [sg.Slider(range=(0.01, 1), default_value=0, resolution=0.01, expand_x=True, enable_events=True, orientation='horizontal', key='-7IDISF-')],
             [sg.Text(key="-8IDISF-", text="c2 - Interval: [0.1,1.0]", visible=False)],
-            #[sg.Input(key="-9IDISF-", visible=False)],
             [sg.Slider(range=(0.01, 1), default_value=0, resolution=0.01, expand_x=True, enable_events=True, orientation='horizontal', key='-9IDISF-')],
             [sg.Text(key="-0DISF-", text="VASCO", visible=False)],
             [sg.Input(key="-1DISF-", visible=False)],
@@ -527,18 +497,8 @@ while True:
         coordinates = [(x, y) for x, y, cell_id in cell_information] 
         c_ids = [cell_id for x, y, cell_id in cell_information]
         
-        #print("Coordinates for", filename, ":")
-        #for coord in coordinates:
-        #    print(coord)
-
-        #print("Cells id for", filename, ":")
-        #for ids in c_ids:
-        #    print(ids)
-
         # Converta as coordenadas para o sistema de coordenadas do Pillow
         largura_imagem, altura_imagem = Image.open(filename_with_path).size
-        #print("Largura da imagem: ", largura_imagem)
-        #print("Altura da imagem: ", altura_imagem)
 
         # Adiciona a chamada da função colorize_coordinates após obter as coordenadas
         colorized_image_path = colorize_coordinates(filename_with_path, coordinates, "./colorCoordinates")
@@ -547,10 +507,6 @@ while True:
 
         # Recortar imagens conforme dimensao informado na interface e coordenadas de cada celula da imagem
         resulting_coordinates = [recortar_e_salvar_imagem(filename_with_path, x, y, cell_id, cut_size, f"./recorteImg/{filename_without_png}") for x, y, cell_id in cell_information]
-        #print("New coordinates:")
-        #for coord in resulting_coordinates:
-        #    print(coord)
-
         os.system(f"mkdir ./recorteImg/{filename_without_png}/segmented")
 
         idisfCopy = idisfCall
@@ -632,8 +588,16 @@ while True:
 
     elif event == "MAHALANOBIS_MULTICLASS":
 
-        # Classificador de Seis Classses das células com a distância de Mahalanobis
+        # Classificador multiclasses das células com a distância de Mahalanobis
         MahalanobisSixClassifier(filename)
+
+    elif event == "CNN_BINARY":
+        # Classificador binário das células com a rede neural
+        binary_cnn_cell_classifier(filename)
+
+    elif event == "CNN_MULTICLASS":
+        # Classificador multiclasses das células com a rede neural
+        multiclass_cnn_cell_classifier(filename)
 
 
 window.close()
