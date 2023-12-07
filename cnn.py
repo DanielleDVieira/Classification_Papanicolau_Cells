@@ -96,7 +96,92 @@ def binary_cnn_cell_classifier(filename):
     # Exibindo a matriz de confusão
     plt.show()
 
-    print(predsAll)
-
 def multiclass_cnn_cell_classifier(filename):
-    print("oi")
+    # Pegando classificacao correta de cada celula da imagem escolhida
+    df = pd.read_csv("./data/classifications.csv")
+    features = df[df['image_filename'] == filename]
+    y_test = features[['bethesda_system']]
+
+    # Lendo cada célula da imagem e calculando a probabilidade para cada classe para classificacao
+    predsAll = []
+    cells_id = []
+    classifications = []
+    filename_without_png = filename.split(".")[0]
+    onlyfiles = [f for f in listdir(f"./recorteImg/{filename_without_png}") if isfile(join(f"./recorteImg/{filename_without_png}", f))]
+    print(onlyfiles)
+    for img in onlyfiles:
+        cells_id.append(img.split(".")[0])
+        img = cv2.imread(f"./recorteImg/{filename_without_png}/{img}")
+        img = cv2.resize(img, (224, 224))
+
+        x = np.expand_dims(img, axis=0)
+        x = preprocess_input(x)
+
+        multiclass_cnn = tf.keras.models.load_model('./data/multiclass_cnn')
+        preds = multiclass_cnn.predict(x)
+        print(preds)
+        predsAll.append(preds)     
+        
+    # Classificando as células com base na maior probabilidade
+    for i in range(len(predsAll)):
+        predSplit = np.array_split(predsAll[i][0], 6)
+        if predSplit[4] > predSplit[0] and predSplit[4] > predSplit[1] and predSplit[4] > predSplit[2] and predSplit[4] > predSplit[3] and predSplit[4] > predSplit[5]:
+            classifications.append(0)
+        elif predSplit[5] > predSplit[0] and predSplit[5] > predSplit[1] and predSplit[5] > predSplit[2] and predSplit[5] > predSplit[3] and predSplit[5] > predSplit[4]:
+            classifications.append(1)
+        elif predSplit[3] > predSplit[0] and predSplit[3] > predSplit[1] and predSplit[3] > predSplit[2] and predSplit[3] > predSplit[4] and predSplit[3] > predSplit[5]:
+            classifications.append(2)
+        elif predSplit[2] > predSplit[0] and predSplit[2] > predSplit[1] and predSplit[2] > predSplit[3] and predSplit[2] > predSplit[4] and predSplit[2] > predSplit[5]:
+            classifications.append(3)
+        elif predSplit[0] > predSplit[1] and predSplit[0] > predSplit[2] and predSplit[0] > predSplit[3] and predSplit[0] > predSplit[4] and predSplit[0] > predSplit[5]:
+            classifications.append(4)
+        elif predSplit[1] > predSplit[0] and predSplit[1] > predSplit[2] and predSplit[1] > predSplit[3] and predSplit[1] > predSplit[4] and predSplit[1] > predSplit[5]:
+            classifications.append(5)
+
+    print(Counter(classifications))
+
+    # Acrescentar no dataframe que contem os descritores da imagem a coluna com sua classificacao
+    classificationCSV = pd.DataFrame({'ID': cells_id})
+    classificationCSV['Classification'] = classifications
+    # Acrescentar no dataframe que contem os descritores da imagem a coluna com a classificacao correta
+    classificationCSV['Correct_Classification'] = y_test['bethesda_system'].values
+    # Substituir os valores na coluna 'Classe'
+    mapeamento = {0: 'Negative', 1: 'SCC', 2: 'LSIL', 3: 'HSIL', 4: 'ASC-H', 5: 'ASC-US'}
+    classificationCSV['Classification'] = classificationCSV['Classification'].replace(mapeamento)
+    print(classificationCSV)
+    # Gravar novo arquivo csv com a classificacao binaria das células
+    classificationCSV.to_csv(f'./data/classificationCell/multiclass_CNN_{filename_without_png}.csv', index=False)
+
+    y_test.replace({
+        'Negative for intraepithelial lesion': 0,
+        'SCC': 1,
+        'LSIL': 2,
+        'HSIL': 3,
+        'ASC-H': 4,
+        'ASC-US': 5,
+    }, inplace=True)
+    print(f"{y_test.value_counts()}")
+
+    acuracia = me.accuracy_score(y_test, classifications) * 100
+    print("Acurácia:", acuracia)
+
+    precisao = me.precision_score(y_test, classifications, average='micro') * 100
+    print("Precisão:", precisao)
+
+    sensibilidade = me.recall_score(y_test, classifications, average='micro') * 100
+    print("Sensibilidade (Revocação):", sensibilidade)
+
+    cm = me.confusion_matrix(y_test, classifications)
+    #classes = ['Negative', 'SCC', 'LSIL', 'HSIL', 'ASC-H', 'ASC-US']  # Mapeamento para 0 1 2 3 4 5
+    fig, ax = plt.subplots(figsize=(8, 8))
+    #disp = me.ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=classes)
+    disp = me.ConfusionMatrixDisplay(confusion_matrix=cm)
+    disp.plot(include_values=True, cmap='Blues', ax=ax, xticks_rotation='horizontal')
+    # Adicionando título
+    plt.title('Matriz de confusão para classificação multiclasse com CNN', pad=60, weight='bold', ha='center')
+    plt.text(0.5, -0.15, f'Acurácia: {acuracia:.2f}%', ha='center', fontsize=10, transform=ax.transAxes, weight='bold')
+    plt.text(0.5, -0.2, f'Precisão: {precisao:.2f}%', ha='center', fontsize=10, transform=ax.transAxes, weight='bold')
+    plt.text(0.5, -0.25, f'Sensibilidade: {sensibilidade:.2f}%', ha='center', fontsize=10, transform=ax.transAxes, weight='bold')
+    plt.savefig(f"./matrizConfusao/multiclasse_Cell_CNN_{filename}")
+    # Exibindo a matriz de confusão
+    plt.show()
